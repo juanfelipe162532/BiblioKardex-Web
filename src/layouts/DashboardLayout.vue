@@ -13,16 +13,21 @@
       <template #prepend>
         <div class="pa-4">
           <div class="d-flex align-center">
-            <v-avatar size="40" class="logo-avatar">
-              <v-icon color="white">mdi-book-open-page-variant</v-icon>
-            </v-avatar>
+            <div class="logo-container">
+              <img 
+                src="@/assets/logo.png" 
+                alt="BiblioKardex Logo" 
+                class="app-logo"
+                :class="{ 'logo-small': rail }"
+              />
+            </div>
             <div v-if="!rail" class="ml-3">
-              <h3 class="text-h6 font-weight-bold text--primary">BiblioKardex</h3>
-              <v-chip x-small color="primary" outlined>BETA</v-chip>
+              <h3 class="text-h6 font-weight-bold" style="color: white;">BiblioKardex</h3>
+              <v-chip x-small color="white" outlined style="color: white; border-color: white;">BETA</v-chip>
             </div>
           </div>
         </div>
-        <v-divider></v-divider>
+        <v-divider style="border-color: rgba(255, 255, 255, 0.2);"></v-divider>
       </template>
 
       <v-list nav dense>
@@ -208,11 +213,30 @@ watch(mobile, (isMobile) => {
 
 <style scoped>
 .drawer-custom {
-  border-right: 1px solid #E2E8F0;
+  background: linear-gradient(180deg, #1E40AF 0%, #3B82F6 100%) !important;
+  border-right: 1px solid rgba(59, 130, 246, 0.3);
+  position: fixed !important;
+  top: 0 !important;
+  height: 100vh !important;
+  z-index: 1000 !important;
 }
 
-.logo-avatar {
-  background: linear-gradient(135deg, #1E3A8A 0%, #7C3AED 100%) !important;
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  transition: all 0.3s ease;
+}
+
+.app-logo.logo-small {
+  width: 32px;
+  height: 32px;
 }
 
 .nav-item {
@@ -220,14 +244,28 @@ watch(mobile, (isMobile) => {
   border-radius: 12px;
 }
 
+.nav-item {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+}
+
 .nav-item.v-list-item--active {
-  background: linear-gradient(135deg, rgba(30, 58, 138, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
-  border: 1px solid rgba(30, 58, 138, 0.2);
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.logout-item {
+  color: rgba(255, 255, 255, 0.8) !important;
 }
 
 .logout-item:hover {
-  background: rgba(220, 38, 38, 0.1);
-  color: #DC2626;
+  background: rgba(220, 38, 38, 0.3) !important;
+  color: #FEE2E2 !important;
 }
 
 .app-bar-custom {
@@ -248,7 +286,7 @@ watch(mobile, (isMobile) => {
 }
 
 .bottom-nav-custom .v-btn--active {
-  color: #1E3A8A;
-  background: rgba(30, 58, 138, 0.1);
+  color: #1E40AF;
+  background: rgba(30, 64, 175, 0.1);
 }
 </style>

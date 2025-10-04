@@ -68,6 +68,18 @@ const router = createRouter({
         }
       ]
     },
+    {
+      path: '/books',
+      component: DashboardLayout,
+      meta: { requiresAuth: true },
+      children: [
+        {
+          path: '',
+          name: 'books',
+          component: () => import('../views/BooksManagementView.vue'),
+        }
+      ]
+    },
   ],
 })
 

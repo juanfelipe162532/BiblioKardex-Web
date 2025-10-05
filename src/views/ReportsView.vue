@@ -12,7 +12,8 @@
             color="primary"
             variant="elevated"
             size="large"
-            @click="showExportDialog = true"
+            disabled
+            title="Funcionalidad en desarrollo"
           >
             <v-icon start>mdi-download</v-icon>
             Exportar Reportes
@@ -28,7 +29,33 @@
         <p class="section-subtitle">Indicadores clave de rendimiento</p>
       </div>
       
-      <div class="metrics-grid">
+      <!-- Loading State -->
+      <div v-if="loading" class="loading-container">
+        <v-progress-circular indeterminate color="primary" size="40"></v-progress-circular>
+        <p class="loading-text">Cargando métricas...</p>
+      </div>
+      
+      <!-- Error State -->
+      <div v-else-if="error" class="error-state">
+        <v-alert type="error" variant="tonal" class="error-alert">
+          <div class="error-content">
+            <v-icon start>mdi-alert-circle</v-icon>
+            <div>
+              <strong>Error al cargar reportes</strong>
+              <p>{{ error }}</p>
+            </div>
+          </div>
+          <template #append>
+            <v-btn variant="text" size="small" @click="loadData">
+              <v-icon start>mdi-refresh</v-icon>
+              Reintentar
+            </v-btn>
+          </template>
+        </v-alert>
+      </div>
+      
+      <!-- Metrics Grid -->
+      <div v-else class="metrics-grid">
         <div
           v-for="(metric, index) in metrics"
           :key="index"
@@ -587,17 +614,13 @@ const createCharts = async () => {
 }
 
 const exportReport = () => {
-  console.log('Exporting report:', {
-    type: exportType.value,
-    format: exportFormat.value,
-    dateFrom: dateFrom.value,
-    dateTo: dateTo.value
-  })
+  // TODO: Implement when backend supports reports export
+  console.log('Export functionality not available yet')
   showExportDialog.value = false
 }
 
-onMounted(async () => {
-  await createCharts()
+onMounted(() => {
+  loadData()
 })
 </script>
 
@@ -660,6 +683,47 @@ onMounted(async () => {
   margin: 4px 0 0 0;
   font-size: 14px;
   color: #64748B;
+}
+
+/* Loading State */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px 24px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #E2E8F0;
+  margin-bottom: 32px;
+}
+
+.loading-text {
+  margin: 0;
+  color: #64748B;
+  font-size: 14px;
+}
+
+/* Error State */
+.error-state {
+  margin-bottom: 32px;
+}
+
+.error-alert {
+  border-radius: 16px;
+}
+
+.error-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.error-content p {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  opacity: 0.8;
 }
 
 /* Metrics */

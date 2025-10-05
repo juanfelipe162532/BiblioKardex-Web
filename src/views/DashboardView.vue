@@ -19,31 +19,6 @@
       </div>
     </div>
 
-    <!-- Quick Actions Section -->
-    <div class="content-section">
-      <div class="section-header">
-        <h2 class="section-title">Acciones Rápidas</h2>
-        <p class="section-subtitle">Gestiona tu biblioteca de manera eficiente</p>
-      </div>
-      
-      <div class="quick-actions-grid">
-        <div 
-          v-for="(action, index) in quickActions" 
-          :key="index"
-          class="action-card"
-          @click="handleStepClick(action.action)"
-        >
-          <div class="action-icon">
-            <v-icon :color="action.color" size="24">{{ action.icon }}</v-icon>
-          </div>
-          <div class="action-content">
-            <h3 class="action-title">{{ action.title }}</h3>
-            <p class="action-description">{{ action.subtitle }}</p>
-          </div>
-          <v-icon class="action-arrow" size="16">mdi-chevron-right</v-icon>
-        </div>
-      </div>
-    </div>
 
     <!-- Statistics Section -->
     <div class="content-section">
@@ -157,13 +132,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
-import { useDashboardStore, useAuthStore, useBooksStore, useLoansStore, useReadersStore } from '@/stores'
-import { Chart, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js'
+import { useDashboardStore, useAuthStore } from '@/stores'
+import { Chart, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, ArcElement } from 'chart.js'
 
-Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement)
+Chart.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, ArcElement)
 
-const router = useRouter()
 const authStore = useAuthStore()
 const dashboard = useDashboardStore()
 
@@ -175,21 +148,7 @@ const userName = computed(() => {
   return name.split(' ')[0]
 })
 
-const userInitials = computed(() => {
-  const name = authStore.user?.nombre || 'U'
-  const parts = name.trim().split(/\s+/).filter(p => p.length > 0)
-  if (parts.length === 0) return 'U'
-  const first = parts[0][0]
-  const second = parts.length > 1 ? parts[1][0] : ''
-  return (first + second).toUpperCase()
-})
 
-const quickActions = [
-  { title: 'Escanear Libro', subtitle: 'Agregar nuevos libros al sistema', icon: 'mdi-camera-outline', color: '#6366F1', action: 'scan' },
-  { title: 'Crear Préstamo', subtitle: 'Registrar un nuevo préstamo', icon: 'mdi-account-plus-outline', color: '#F59E0B', action: 'loan' },
-  { title: 'Procesar Devolución', subtitle: 'Marcar libro como disponible', icon: 'mdi-keyboard-return', color: '#10B981', action: 'return' },
-  { title: 'Ver Inventario', subtitle: 'Revisar estado del inventario', icon: 'mdi-clipboard-list-outline', color: '#8B5CF6', action: 'inventory' }
-]
 
 const statisticsLoading = computed(() => dashboard.loading)
 
@@ -246,20 +205,6 @@ const aiFeatures = [
   { label: 'Análisis de texto', icon: 'mdi-chart-line' }
 ]
 
-const handleStepClick = (action: string) => {
-  switch (action) {
-    case 'scan':
-      // TODO: Página de escaneo en web
-      break
-    case 'loan':
-      // TODO: Página de préstamo en web
-      break
-    case 'return':
-    case 'inventory':
-      router.push('/reports')
-      break
-  }
-}
 
 const createCharts = async () => {
   await nextTick()
@@ -449,58 +394,6 @@ watch(() => authStore.user?.bibliotecaId, (newId) => {
   color: #64748B;
 }
 
-/* Quick Actions */
-.quick-actions-grid {
-  margin-top: 16px;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-.action-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #ffffff;
-  border: 1px solid #E2E8F0;
-  border-radius: 16px;
-  padding: 16px;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.action-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(30, 58, 138, 0.35);
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.06);
-}
-
-.action-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: #F1F5F9;
-  display: grid;
-  place-items: center;
-}
-
-.action-content { flex: 1; }
-
-.action-title {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: #1E293B;
-}
-
-.action-description {
-  margin: 2px 0 0 0;
-  font-size: 12px;
-  color: #64748B;
-}
-
-.action-arrow { color: #94A3B8; transition: transform 0.2s ease; }
-.action-card:hover .action-arrow { transform: translateX(2px); }
 
 /* Statistics */
 .stats-grid {
@@ -671,12 +564,10 @@ watch(() => authStore.user?.bibliotecaId, (newId) => {
 
 /* Responsive */
 @media (max-width: 1200px) {
-  .quick-actions-grid { grid-template-columns: repeat(3, 1fr); }
   .stats-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (max-width: 900px) {
-  .quick-actions-grid { grid-template-columns: repeat(2, 1fr); }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .charts-grid { grid-template-columns: 1fr; }
 }
@@ -697,7 +588,6 @@ watch(() => authStore.user?.bibliotecaId, (newId) => {
 @media (max-width: 600px) {
   .welcome-content { padding: 0 20px; }
   .content-section { padding: 20px; }
-  .quick-actions-grid { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: 1fr; }
   
   .dashboard-logo {

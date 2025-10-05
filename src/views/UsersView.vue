@@ -75,7 +75,33 @@
         </div>
       </div>
 
-      <div v-if="filteredUsers.length > 0" class="users-grid">
+      <!-- Loading State -->
+      <div v-if="isLoading" class="loading-container">
+        <v-progress-circular indeterminate color="primary" size="40"></v-progress-circular>
+        <p class="loading-text">Cargando usuarios...</p>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="error-state">
+        <v-alert type="error" variant="tonal" class="error-alert">
+          <div class="error-content">
+            <v-icon start>mdi-alert-circle</v-icon>
+            <div>
+              <strong>Error al cargar usuarios</strong>
+              <p>{{ error }}</p>
+            </div>
+          </div>
+          <template #append>
+            <v-btn variant="text" size="small" @click="loadData">
+              <v-icon start>mdi-refresh</v-icon>
+              Reintentar
+            </v-btn>
+          </template>
+        </v-alert>
+      </div>
+
+      <!-- Users Grid -->
+      <div v-else-if="filteredUsers.length > 0" class="users-grid">
         <div
           v-for="user in filteredUsers"
           :key="user.id"
@@ -99,8 +125,9 @@
 
           <div class="user-info">
             <h3 class="user-name">{{ user.name }}</h3>
-            <p class="user-email">{{ user.email }}</p>
-            <p v-if="user.phone" class="user-phone">{{ user.phone }}</p>
+            <p class="user-cedula">Cédula: {{ getReaderCedula(user.id) }}</p>
+            <p class="user-phone">{{ user.phone }}</p>
+            <p v-if="user.email !== 'Sin email'" class="user-email">{{ user.email }}</p>
           </div>
 
           <div class="user-stats">
@@ -151,7 +178,7 @@
       </div>
 
       <!-- Empty State -->
-      <div v-else class="empty-state">
+      <div v-else-if="!isLoading" class="empty-state">
         <div class="empty-icon">
           <v-icon size="64" color="grey-lighten-1">mdi-account-group-outline</v-icon>
         </div>
@@ -198,9 +225,9 @@
             </div>
             <div class="form-row">
               <v-text-field
-                v-model="newUser.email"
-                label="Correo electrónico"
-                :rules="emailRules"
+                v-model="newUser.cedula"
+                label="Cédula"
+                :rules="cedulaRules"
                 variant="outlined"
                 required
               />
@@ -208,15 +235,25 @@
             <div class="form-row">
               <v-text-field
                 v-model="newUser.phone"
-                label="Teléfono (opcional)"
+                label="Teléfono"
+                :rules="phoneRules"
+                variant="outlined"
+                required
+              />
+            </div>
+            <div class="form-row">
+              <v-text-field
+                v-model="newUser.email"
+                label="Correo electrónico (opcional)"
+                :rules="emailOptionalRules"
                 variant="outlined"
               />
             </div>
             <div class="form-row">
-              <v-select
-                v-model="newUser.type"
-                :items="userTypes"
-                label="Tipo de usuario"
+              <v-text-field
+                v-model="newUser.direccion"
+                label="Dirección"
+                :rules="direccionRules"
                 variant="outlined"
                 required
               />
@@ -248,7 +285,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useReadersStore, useAuthStore } from '@/stores'
+import type { Reader } from '@/services/api'
 
 interface User {
   id: string
@@ -272,80 +311,67 @@ const newUser = ref({
   name: '',
   email: '',
   phone: '',
-  type: 'Estudiante'
+  cedula: '',
+  direccion: ''
 })
 
-const users = ref<User[]>([
-  {
-    id: '1',
-    name: 'María García Pérez',
-    email: 'maria.garcia@universidad.edu.co',
-    phone: '+57 300 123 4567',
-    type: 'Estudiante',
-    color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    loansCount: 15,
-    activeLoans: 2,
-    lastLoan: 'Hace 2 días'
-  },
-  {
-    id: '2',
-    name: 'Dr. Carlos López Silva',
-    email: 'carlos.lopez@universidad.edu.co',
-    phone: '+57 301 234 5678',
-    type: 'Profesor',
-    color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    loansCount: 28,
-    activeLoans: 3,
-    lastLoan: 'Hace 1 día'
-  },
-  {
-    id: '3',
-    name: 'Ana Martínez Rodriguez',
-    email: 'ana.martinez@investigacion.gov.co',
-    phone: '+57 302 345 6789',
-    type: 'Investigador',
-    color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    loansCount: 22,
-    activeLoans: 1,
-    lastLoan: 'Hace 3 días'
-  },
-  {
-    id: '4',
-    name: 'Roberto Silva Mendoza',
-    email: 'roberto.silva@empresa.com',
-    phone: '+57 303 456 7890',
-    type: 'Visitante',
-    color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-    loansCount: 8,
-    activeLoans: 0,
-    lastLoan: 'Hace 1 semana'
-  },
-  {
-    id: '5',
-    name: 'Lucía Fernández Torres',
-    email: 'lucia.fernandez@universidad.edu.co',
-    phone: '+57 304 567 8901',
-    type: 'Estudiante',
-    color: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-    loansCount: 12,
-    activeLoans: 1,
-    lastLoan: 'Hace 4 días'
-  }
-])
+const readersStore = useReadersStore()
+const authStore = useAuthStore()
 
-const filterOptions = ['Todos', 'Estudiante', 'Profesor', 'Investigador', 'Visitante']
-const sortOptions = ['Nombre', 'Préstamos', 'Último préstamo']
-const userTypes = ['Estudiante', 'Profesor', 'Investigador', 'Visitante']
+const isLoading = computed(() => readersStore.loading)
+const error = computed(() => readersStore.error)
+
+const filterOptions = ['Todos']
+const sortOptions = ['Nombre', 'Fecha de creación', 'Préstamos']
+const userTypes = ['Lector']
 
 const nameRules = [
   (v: string) => !!v || 'El nombre es requerido',
-  (v: string) => v.length >= 2 || 'El nombre debe tener al menos 2 caracteres'
+  (v: string) => v.length >= 3 || 'El nombre debe tener al menos 3 caracteres'
 ]
 
-const emailRules = [
-  (v: string) => !!v || 'El correo es requerido',
-  (v: string) => /.+@.+\..+/.test(v) || 'Correo inválido'
+const cedulaRules = [
+  (v: string) => !!v || 'La cédula es requerida',
+  (v: string) => v.length >= 3 || 'La cédula debe tener al menos 3 caracteres'
 ]
+
+const phoneRules = [
+  (v: string) => !!v || 'El teléfono es requerido',
+  (v: string) => v.length >= 3 || 'El teléfono debe tener al menos 3 caracteres'
+]
+
+const direccionRules = [
+  (v: string) => !!v || 'La dirección es requerida',
+  (v: string) => v.length >= 3 || 'La dirección debe tener al menos 3 caracteres'
+]
+
+const emailOptionalRules = [
+  (v: string) => !v || /.+@.+\..+/.test(v) || 'Correo inválido'
+]
+
+const users = computed(() => {
+  const gradients = [
+    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+    'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+    'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+    'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)'
+  ]
+  
+  return readersStore.readers.map((reader: Reader, index: number): User => ({
+    id: reader.id,
+    name: reader.nombreCompleto,
+    email: reader.email || 'Sin email',
+    phone: reader.celular,
+    type: 'Lector', // Backend no maneja tipos específicos
+    color: gradients[index % gradients.length],
+    loansCount: reader.totalPrestamos || 0,
+    activeLoans: reader.prestamosActivos || 0,
+    lastLoan: formatRelativeTime(reader.fechaCreacion)
+  }))
+})
 
 const filteredUsers = computed(() => {
   let filtered = users.value
@@ -357,16 +383,12 @@ const filteredUsers = computed(() => {
     )
   }
 
-  if (filterType.value !== 'Todos') {
-    filtered = filtered.filter(user => user.type === filterType.value)
-  }
-
   filtered.sort((a, b) => {
     switch (sortBy.value) {
+      case 'Fecha de creación':
+        return new Date(b.lastLoan).getTime() - new Date(a.lastLoan).getTime()
       case 'Préstamos':
         return b.loansCount - a.loansCount
-      case 'Último préstamo':
-        return new Date(b.lastLoan).getTime() - new Date(a.lastLoan).getTime()
       default:
         return a.name.localeCompare(b.name)
     }
@@ -385,45 +407,58 @@ const getUserInitials = (name: string): string => {
 
 const getTypeColor = (type: string): string => {
   const colors: Record<string, string> = {
-    'Estudiante': 'blue',
-    'Profesor': 'green',
-    'Investigador': 'purple',
-    'Visitante': 'orange'
+    'Lector': 'blue'
   }
-  return colors[type] || 'grey'
+  return colors[type] || 'blue'
 }
 
-const addUser = () => {
-  const gradients = [
-    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-    'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-    'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-    'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)'
-  ]
-  const randomGradient = gradients[Math.floor(Math.random() * gradients.length)]
-  
-  users.value.push({
-    id: Date.now().toString(),
-    name: newUser.value.name,
-    email: newUser.value.email,
-    phone: newUser.value.phone,
-    type: newUser.value.type,
-    color: randomGradient,
-    loansCount: 0,
-    activeLoans: 0,
-    lastLoan: 'Nunca'
-  })
+const getReaderCedula = (userId: string): string => {
+  const reader = readersStore.readers.find(r => r.id === userId)
+  return reader?.cedula || 'N/A'
+}
 
-  newUser.value = {
-    name: '',
-    email: '',
-    phone: '',
-    type: 'Estudiante'
+const formatRelativeTime = (dateString?: string): string => {
+  if (!dateString) return 'Fecha desconocida'
+  const date = new Date(dateString)
+  if (isNaN(date.getTime())) return 'Fecha inválida'
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const minutes = Math.floor(diffMs / 60000)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+  if (days > 7) return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
+  if (days >= 1) return days === 1 ? 'Ayer' : `Hace ${days} días`
+  if (hours >= 1) return `Hace ${hours} horas`
+  return `Hace ${minutes} minutos`
+}
+
+const addUser = async () => {
+  if (!authStore.user?.bibliotecaId) {
+    readersStore.error = 'No se puede determinar la biblioteca'
+    return
   }
-  showAddDialog.value = false
+
+  const readerData = {
+    nombre: newUser.value.name,
+    email: newUser.value.email,
+    telefono: newUser.value.phone || undefined,
+    identificacion: newUser.value.cedula,
+    bibliotecaId: authStore.user.bibliotecaId
+  }
+
+  const created = await readersStore.createReader(readerData)
+  if (created) {
+    newUser.value = {
+      name: '',
+      email: '',
+      phone: '',
+      cedula: '',
+      direccion: ''
+    }
+    showAddDialog.value = false
+    // Reload data
+    loadData()
+  }
 }
 
 const viewUser = (user: User) => {
@@ -434,12 +469,43 @@ const editUser = (user: User) => {
   console.log('Edit user:', user)
 }
 
-const deleteUser = (user: User) => {
-  const index = users.value.findIndex(u => u.id === user.id)
-  if (index > -1) {
-    users.value.splice(index, 1)
+const deleteUser = async (user: User) => {
+  if (confirm(`¿Está seguro de que desea eliminar a ${user.name}?`)) {
+    await readersStore.deleteReader(user.id)
   }
 }
+
+const loadData = async () => {
+  if (authStore.user?.bibliotecaId) {
+    await readersStore.fetchReaders(authStore.user.bibliotecaId, 1, 100)
+  }
+}
+
+onMounted(() => {
+  loadData()
+})
+
+// Watch for search changes
+watch(search, (newSearch) => {
+  if (authStore.user?.bibliotecaId) {
+    if (newSearch) {
+      readersStore.searchReaders(newSearch, authStore.user.bibliotecaId)
+    } else {
+      readersStore.fetchReaders(authStore.user.bibliotecaId, 1, 100)
+    }
+  }
+}, { debounce: 500 })
+
+// Watch for filter changes
+watch(filterType, () => {
+  if (authStore.user?.bibliotecaId) {
+    if (filterType.value !== 'Todos') {
+      readersStore.fetchReadersByType(filterType.value, authStore.user.bibliotecaId)
+    } else {
+      readersStore.fetchReaders(authStore.user.bibliotecaId, 1, 100)
+    }
+  }
+})
 </script>
 
 <style scoped>
@@ -612,15 +678,22 @@ const deleteUser = (user: User) => {
   color: #1E293B;
 }
 
-.user-email {
+.user-cedula {
   margin: 0 0 4px 0;
-  font-size: 14px;
+  font-size: 13px;
   color: #64748B;
+  font-weight: 500;
 }
 
 .user-phone {
-  margin: 0;
+  margin: 0 0 4px 0;
   font-size: 13px;
+  color: #64748B;
+}
+
+.user-email {
+  margin: 0;
+  font-size: 12px;
   color: #94A3B8;
 }
 
@@ -673,6 +746,46 @@ const deleteUser = (user: User) => {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+/* Loading State */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px 24px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #E2E8F0;
+}
+
+.loading-text {
+  margin: 0;
+  color: #64748B;
+  font-size: 14px;
+}
+
+/* Error State */
+.error-state {
+  margin-bottom: 24px;
+}
+
+.error-alert {
+  border-radius: 16px;
+}
+
+.error-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.error-content p {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  opacity: 0.8;
 }
 
 /* Empty State */

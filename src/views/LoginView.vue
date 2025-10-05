@@ -4,25 +4,15 @@
     <div v-if="loadingAuth" class="fullscreen-loading">
       <div class="loading-content">
         <div class="loading-animation">
-          <v-progress-circular 
-            indeterminate 
-            color="white" 
-            size="100" 
-            width="6"
-            class="loading-spinner"
-          ></v-progress-circular>
+          <v-progress-circular indeterminate color="white" size="100" width="6"
+            class="loading-spinner"></v-progress-circular>
         </div>
-        
+
         <h1 class="loading-title">{{ loadingMessages[loadingStep] || loadingMessages[0] }}</h1>
-        
+
         <div class="loading-progress-bar">
-          <v-progress-linear 
-            :model-value="((loadingStep + 1) / loadingMessages.length) * 100"
-            color="white"
-            height="6"
-            rounded
-            class="custom-progress"
-          ></v-progress-linear>
+          <v-progress-linear :model-value="((loadingStep + 1) / loadingMessages.length) * 100" color="white" height="6"
+            rounded class="custom-progress"></v-progress-linear>
           <p class="progress-text">{{ loadingStep + 1 }} de {{ loadingMessages.length }}</p>
         </div>
 
@@ -105,7 +95,7 @@
                         </div>
                         <div class="instruction-item">
                           <v-icon color="primary" size="24" class="mr-2">mdi-qrcode-scan</v-icon>
-                          <span class="text-body-1">2. Ve a Perfil → "Escanear QR Web"</span>
+                          <span class="text-body-1">2. Ve a "Escanear QR Web"</span>
                         </div>
                         <div class="instruction-item">
                           <v-icon color="primary" size="24" class="mr-2">mdi-camera</v-icon>
@@ -239,14 +229,14 @@ const generateQRCode = async () => {
         'Content-Type': 'application/json'
       }
     })
-    
+
     if (!response.ok) {
       throw new Error('Error generating QR token')
     }
-    
+
     const data = await response.json()
     qrToken.value = data.data.token
-    
+
     // Create QR data with token and app identifier
     const qrData = JSON.stringify({
       type: 'qr_login',
@@ -254,25 +244,25 @@ const generateQRCode = async () => {
       app: 'bibliokardex',
       timestamp: Date.now()
     })
-    
+
     // Generate QR code with custom styling
     const qr = QRCode(0, 'H') // High error correction for better scanning
     qr.addData(qrData)
     qr.make()
-    
+
     // Convert to SVG with custom styling
     qrCode.value = qr.createSvgTag({
       cellSize: 4,
       margin: 8,
       scalable: true
     })
-    
+
     // Start polling for login status
     startPolling()
-    
+
     // Start auto-refresh interval (30 seconds)
     startAutoRefresh()
-    
+
   } catch (error) {
     console.error('Error generating QR code:', error)
     qrCode.value = ''
@@ -285,42 +275,42 @@ const startPolling = () => {
   if (pollInterval) {
     clearInterval(pollInterval)
   }
-  
+
   pollInterval = setInterval(async () => {
     if (!qrToken.value) return
-    
+
     try {
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/qr/status/${qrToken.value}`)
-      
+
       if (response.status === 404 || response.status === 410) {
         // Token expired or invalid, generate new one
         clearInterval(pollInterval!)
         generateQRCode()
         return
       }
-      
+
       if (!response.ok) {
         throw new Error('Error checking QR status')
       }
-      
+
       const data = await response.json()
-      
+
       if (data.data.tokenStatus === 'authenticated' && data.data.user) {
         clearInterval(pollInterval!)
         clearInterval(refreshInterval!)
-        
+
         // Start loading sequence
         loadingAuth.value = true
         loadingStep.value = 0
         successMessage.value = `¡Bienvenido, ${data.data.user.nombre}!`
-        
+
         // Set user in auth store
         authStore.user = data.data.user
-        
+
         // Start loading steps animation
         startLoadingSequence()
       }
-      
+
     } catch (error) {
       console.error('Error polling QR status:', error)
     }
@@ -331,7 +321,7 @@ const startAutoRefresh = () => {
   if (refreshInterval) {
     clearInterval(refreshInterval)
   }
-  
+
   refreshInterval = setInterval(() => {
     console.log('Auto-refreshing QR code...')
     generateQRCode()
@@ -342,14 +332,14 @@ const startLoadingSequence = () => {
   // Change loading message every 1.5 seconds for 5 steps (7.5 seconds total)
   const stepInterval = setInterval(() => {
     loadingStep.value++
-    
+
     if (loadingStep.value >= loadingMessages.length) {
       clearInterval(stepInterval)
       // Show success after loading sequence
       setTimeout(() => {
         loadingAuth.value = false
         authSuccess.value = true
-        
+
         // Redirect after success message
         setTimeout(() => {
           router.push('/dashboard')
@@ -971,6 +961,7 @@ onUnmounted(() => {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -981,6 +972,7 @@ onUnmounted(() => {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -992,6 +984,7 @@ onUnmounted(() => {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1003,9 +996,11 @@ onUnmounted(() => {
     transform: scale(0.8);
     opacity: 0;
   }
+
   50% {
     transform: scale(1.1);
   }
+
   100% {
     transform: scale(1);
     opacity: 1;
@@ -1013,9 +1008,12 @@ onUnmounted(() => {
 }
 
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
+
   50% {
     transform: translateY(-15px);
   }

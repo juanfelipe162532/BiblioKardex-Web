@@ -395,6 +395,7 @@ export interface Reader {
   email: string
   telefono?: string
   tipo: string
+  identificacion?: string
   bibliotecaId: string
   fechaCreacion: string
 }

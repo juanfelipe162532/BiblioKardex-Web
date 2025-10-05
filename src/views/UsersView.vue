@@ -362,13 +362,13 @@ const users = computed(() => {
   
   return readersStore.readers.map((reader: Reader, index: number): User => ({
     id: reader.id,
-    name: reader.nombreCompleto,
+    name: reader.nombre,
     email: reader.email || 'Sin email',
-    phone: reader.celular,
-    type: 'Lector', // Backend no maneja tipos específicos
+    phone: reader.telefono,
+    type: reader.tipo || 'Lector',
     color: gradients[index % gradients.length],
-    loansCount: reader.totalPrestamos || 0,
-    activeLoans: reader.prestamosActivos || 0,
+    loansCount: 0,
+    activeLoans: 0,
     lastLoan: formatRelativeTime(reader.fechaCreacion)
   }))
 })
@@ -407,6 +407,9 @@ const getUserInitials = (name: string): string => {
 
 const getTypeColor = (type: string): string => {
   const colors: Record<string, string> = {
+    'ESTUDIANTE': 'blue',
+    'PROFESOR': 'purple',
+    'EXTERNO': 'green',
     'Lector': 'blue'
   }
   return colors[type] || 'blue'
@@ -414,7 +417,7 @@ const getTypeColor = (type: string): string => {
 
 const getReaderCedula = (userId: string): string => {
   const reader = readersStore.readers.find(r => r.id === userId)
-  return reader?.cedula || 'N/A'
+  return reader?.identificacion || 'N/A'
 }
 
 const formatRelativeTime = (dateString?: string): string => {
@@ -438,11 +441,12 @@ const addUser = async () => {
     return
   }
 
-  const readerData = {
+  const readerData: import('@/services/api').CreateReaderRequest = {
     nombre: newUser.value.name,
     email: newUser.value.email,
     telefono: newUser.value.phone || undefined,
     identificacion: newUser.value.cedula,
+    tipo: 'EXTERNO',
     bibliotecaId: authStore.user.bibliotecaId
   }
 
@@ -485,16 +489,20 @@ onMounted(() => {
   loadData()
 })
 
-// Watch for search changes
-watch(search, (newSearch) => {
-  if (authStore.user?.bibliotecaId) {
+// Watch for search changes (debounced)
+let searchDebounce: number | undefined
+watch(search, (newSearch: string) => {
+  const bibliotecaId = authStore.user?.bibliotecaId
+  if (!bibliotecaId) return
+  if (searchDebounce) window.clearTimeout(searchDebounce)
+  searchDebounce = window.setTimeout(() => {
     if (newSearch) {
-      readersStore.searchReaders(newSearch, authStore.user.bibliotecaId)
+      readersStore.searchReaders(newSearch, bibliotecaId)
     } else {
-      readersStore.fetchReaders(authStore.user.bibliotecaId, 1, 100)
+      readersStore.fetchReaders(bibliotecaId, 1, 100)
     }
-  }
-}, { debounce: 500 })
+  }, 500)
+})
 
 // Watch for filter changes
 watch(filterType, () => {

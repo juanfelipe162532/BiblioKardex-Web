@@ -324,6 +324,10 @@ const categoriesChart = ref<HTMLCanvasElement>()
 const usersChart = ref<HTMLCanvasElement>()
 const monthlyChart = ref<HTMLCanvasElement>()
 
+// UI state
+const loading = ref(true)
+const error = ref<string | null>(null)
+
 const metrics = [
   {
     label: 'Total Préstamos',
@@ -622,6 +626,19 @@ const exportReport = () => {
 onMounted(() => {
   loadData()
 })
+
+const loadData = async () => {
+  try {
+    loading.value = true
+    error.value = null
+    await createCharts()
+  } catch (e) {
+    console.error('Error loading reports:', e)
+    error.value = e instanceof Error ? e.message : 'Error al cargar reportes'
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <style scoped>

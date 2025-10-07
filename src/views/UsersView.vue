@@ -1,186 +1,293 @@
 <template>
-  <v-container fluid class="pa-6">
-    <!-- Header -->
-    <div class="d-flex justify-space-between align-center mb-6">
-      <div>
-        <h1 class="text-h4 font-weight-bold text--primary">Usuarios Recurrentes</h1>
-        <p class="text-body-1 text--secondary mt-1">Gestiona los usuarios frecuentes de tu biblioteca</p>
+  <div class="users-container">
+    <!-- Modern Header Section -->
+    <div class="header-section">
+      <div class="header-content">
+        <div class="title-section">
+          <h1 class="page-title">Gestión de Usuarios</h1>
+          <p class="page-subtitle">Administra los usuarios frecuentes de tu biblioteca</p>
+        </div>
+        <v-btn
+          color="primary"
+          variant="elevated"
+          size="large"
+          class="add-btn"
+          @click="showAddDialog = true"
+        >
+          <v-icon start>mdi-plus</v-icon>
+          Nuevo Usuario
+        </v-btn>
       </div>
-      <v-btn
-        color="primary"
-        class="text-none"
-        @click="showAddDialog = true"
-      >
-        <v-icon left>mdi-plus</v-icon>
-        Agregar Usuario
-      </v-btn>
     </div>
 
-    <!-- Search and Filters -->
-    <v-card class="mb-6" elevation="1">
-      <v-card-text>
-        <v-row align="center">
-          <v-col cols="12" md="6">
+    <!-- Search and Filters Section -->
+    <div class="content-section">
+      <div class="filters-card">
+        <div class="filters-header">
+          <h3 class="filters-title">Buscar y Filtrar</h3>
+          <p class="filters-subtitle">Encuentra usuarios rápidamente</p>
+        </div>
+        <div class="filters-content">
+          <div class="search-field">
             <v-text-field
               v-model="search"
-              placeholder="Buscar usuarios..."
-              prepend-inner-icon="mdi-magnify"
-              outlined
-              dense
+              placeholder="Buscar por nombre o email..."
+              variant="outlined"
+              density="comfortable"
               hide-details
               clearable
-            />
-          </v-col>
-          <v-col cols="12" md="3">
+            >
+              <template #prepend-inner>
+                <v-icon color="grey-darken-1">mdi-magnify</v-icon>
+              </template>
+            </v-text-field>
+          </div>
+          <div class="filter-selects">
             <v-select
               v-model="filterType"
               :items="filterOptions"
-              label="Filtrar por tipo"
-              outlined
-              dense
+              label="Tipo de usuario"
+              variant="outlined"
+              density="comfortable"
               hide-details
             />
-          </v-col>
-          <v-col cols="12" md="3">
             <v-select
               v-model="sortBy"
               :items="sortOptions"
               label="Ordenar por"
-              outlined
-              dense
+              variant="outlined"
+              density="comfortable"
               hide-details
             />
-          </v-col>
-        </v-row>
-      </v-card-text>
-    </v-card>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <!-- Users List -->
-    <v-row>
-      <v-col
-        v-for="user in filteredUsers"
-        :key="user.id"
-        cols="12"
-        sm="6"
-        md="4"
-        lg="3"
-      >
-        <v-card class="user-card h-100" elevation="2" hover>
-          <v-card-text class="text-center pa-4">
-            <v-avatar size="64" :color="user.color" class="mb-3">
-              <span class="text-h5 white--text font-weight-bold">
-                {{ getUserInitials(user.name) }}
-              </span>
-            </v-avatar>
-            
-            <h3 class="text-h6 font-weight-bold text--primary mb-1">{{ user.name }}</h3>
-            <p class="text-body-2 text--secondary mb-2">{{ user.email }}</p>
-            
-            <v-chip
-              :color="getTypeColor(user.type)"
-              small
-              text-color="white"
-              class="mb-3"
-            >
-              {{ user.type }}
-            </v-chip>
-            
-            <div class="user-stats mb-3">
-              <div class="d-flex justify-space-between text-center">
-                <div class="flex-grow-1">
-                  <p class="text-h6 font-weight-bold text--primary mb-0">{{ user.loansCount }}</p>
-                  <p class="text-caption text--secondary">Préstamos</p>
-                </div>
-                <v-divider vertical class="mx-2" />
-                <div class="flex-grow-1">
-                  <p class="text-h6 font-weight-bold text--primary mb-0">{{ user.activeLoans }}</p>
-                  <p class="text-caption text--secondary">Activos</p>
-                </div>
-              </div>
+    <!-- Users Grid Section -->
+    <div class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">Usuarios Registrados</h2>
+        <div class="users-count">
+          <v-chip variant="tonal" color="primary" size="small">
+            {{ filteredUsers.length }} usuario{{ filteredUsers.length !== 1 ? 's' : '' }}
+          </v-chip>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div v-if="isLoading" class="loading-container">
+        <v-progress-circular indeterminate color="primary" size="40"></v-progress-circular>
+        <p class="loading-text">Cargando usuarios...</p>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="error-state">
+        <v-alert type="error" variant="tonal" class="error-alert">
+          <div class="error-content">
+            <v-icon start>mdi-alert-circle</v-icon>
+            <div>
+              <strong>Error al cargar usuarios</strong>
+              <p>{{ error }}</p>
             </div>
-            
-            <p class="text-caption text--secondary">
-              Último préstamo: {{ user.lastLoan }}
-            </p>
-          </v-card-text>
+          </div>
+          <template #append>
+            <v-btn variant="text" size="small" @click="loadData">
+              <v-icon start>mdi-refresh</v-icon>
+              Reintentar
+            </v-btn>
+          </template>
+        </v-alert>
+      </div>
 
-          <v-card-actions>
-            <v-btn text small color="primary" @click="viewUser(user)">
-              <v-icon left small>mdi-eye</v-icon>
+      <!-- Users Grid -->
+      <div v-else-if="filteredUsers.length > 0" class="users-grid">
+        <div
+          v-for="user in filteredUsers"
+          :key="user.id"
+          class="user-card"
+        >
+          <div class="user-avatar-section">
+            <div class="user-avatar" :style="`background: ${user.color}`">
+              <span class="avatar-text">{{ getUserInitials(user.name) }}</span>
+            </div>
+            <div class="user-status">
+              <v-chip
+                :color="getTypeColor(user.type)"
+                variant="tonal"
+                size="small"
+                class="type-chip"
+              >
+                {{ user.type }}
+              </v-chip>
+            </div>
+          </div>
+
+          <div class="user-info">
+            <h3 class="user-name">{{ user.name }}</h3>
+            <p class="user-cedula">Cédula: {{ getReaderCedula(user.id) }}</p>
+            <p class="user-phone">{{ user.phone }}</p>
+            <p v-if="user.email !== 'Sin email'" class="user-email">{{ user.email }}</p>
+          </div>
+
+          <div class="user-stats">
+            <div class="stat-item">
+              <span class="stat-value">{{ user.loansCount }}</span>
+              <span class="stat-label">Total préstamos</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <span class="stat-value">{{ user.activeLoans }}</span>
+              <span class="stat-label">Activos</span>
+            </div>
+          </div>
+
+          <div class="user-meta">
+            <p class="last-loan">Último préstamo: {{ user.lastLoan }}</p>
+          </div>
+
+          <div class="user-actions">
+            <v-btn
+              variant="text"
+              color="primary"
+              size="small"
+              @click="viewUser(user)"
+            >
+              <v-icon start size="16">mdi-eye</v-icon>
               Ver
             </v-btn>
-            <v-btn text small color="orange" @click="editUser(user)">
-              <v-icon left small>mdi-pencil</v-icon>
+            <v-btn
+              variant="text"
+              color="orange"
+              size="small"
+              @click="editUser(user)"
+            >
+              <v-icon start size="16">mdi-pencil</v-icon>
               Editar
             </v-btn>
-            <v-spacer />
-            <v-btn text small color="red" @click="deleteUser(user)">
-              <v-icon small>mdi-delete</v-icon>
+            <v-btn
+              variant="text"
+              color="error"
+              size="small"
+              @click="deleteUser(user)"
+            >
+              <v-icon size="16">mdi-delete</v-icon>
             </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-col>
-    </v-row>
+          </div>
+        </div>
+      </div>
 
-    <!-- Empty State -->
-    <v-card v-if="filteredUsers.length === 0" class="pa-8 text-center" elevation="1">
-      <v-icon size="64" color="grey lighten-1" class="mb-4">mdi-account-group-outline</v-icon>
-      <h2 class="text-h5 text--secondary mb-2">No se encontraron usuarios</h2>
-      <p class="text-body-1 text--secondary">
-        {{ search ? 'Intenta con otros términos de búsqueda' : 'Agrega tu primer usuario recurrente' }}
-      </p>
-      <v-btn v-if="!search" color="primary" class="mt-4" @click="showAddDialog = true">
-        <v-icon left>mdi-plus</v-icon>
-        Agregar Usuario
-      </v-btn>
-    </v-card>
+      <!-- Empty State -->
+      <div v-else-if="!isLoading" class="empty-state">
+        <div class="empty-icon">
+          <v-icon size="64" color="grey-lighten-1">mdi-account-group-outline</v-icon>
+        </div>
+        <h3 class="empty-title">No se encontraron usuarios</h3>
+        <p class="empty-subtitle">
+          {{ search ? 'Intenta con otros términos de búsqueda' : 'Agrega tu primer usuario recurrente' }}
+        </p>
+        <v-btn
+          v-if="!search"
+          color="primary"
+          variant="elevated"
+          class="empty-action"
+          @click="showAddDialog = true"
+        >
+          <v-icon start>mdi-plus</v-icon>
+          Agregar Usuario
+        </v-btn>
+      </div>
+    </div>
 
     <!-- Add User Dialog -->
-    <v-dialog v-model="showAddDialog" max-width="500">
-      <v-card>
-        <v-card-title class="text-h5">Agregar Usuario Recurrente</v-card-title>
-        <v-card-text>
+    <v-dialog v-model="showAddDialog" max-width="600" persistent>
+      <v-card class="dialog-card">
+        <v-card-title class="dialog-header">
+          <div class="dialog-icon">
+            <v-icon color="primary">mdi-account-plus</v-icon>
+          </div>
+          <div class="dialog-text">
+            <h2 class="dialog-title">Agregar Usuario</h2>
+            <p class="dialog-subtitle">Registra un nuevo usuario recurrente</p>
+          </div>
+        </v-card-title>
+
+        <v-card-text class="dialog-content">
           <v-form ref="form" v-model="valid">
-            <v-text-field
-              v-model="newUser.name"
-              label="Nombre completo"
-              :rules="nameRules"
-              outlined
-              required
-            />
-            <v-text-field
-              v-model="newUser.email"
-              label="Correo electrónico"
-              :rules="emailRules"
-              outlined
-              required
-            />
-            <v-text-field
-              v-model="newUser.phone"
-              label="Teléfono"
-              outlined
-            />
-            <v-select
-              v-model="newUser.type"
-              :items="userTypes"
-              label="Tipo de usuario"
-              outlined
-              required
-            />
+            <div class="form-row">
+              <v-text-field
+                v-model="newUser.name"
+                label="Nombre completo"
+                :rules="nameRules"
+                variant="outlined"
+                required
+              />
+            </div>
+            <div class="form-row">
+              <v-text-field
+                v-model="newUser.cedula"
+                label="Cédula"
+                :rules="cedulaRules"
+                variant="outlined"
+                required
+              />
+            </div>
+            <div class="form-row">
+              <v-text-field
+                v-model="newUser.phone"
+                label="Teléfono"
+                :rules="phoneRules"
+                variant="outlined"
+                required
+              />
+            </div>
+            <div class="form-row">
+              <v-text-field
+                v-model="newUser.email"
+                label="Correo electrónico (opcional)"
+                :rules="emailOptionalRules"
+                variant="outlined"
+              />
+            </div>
+            <div class="form-row">
+              <v-text-field
+                v-model="newUser.direccion"
+                label="Dirección"
+                :rules="direccionRules"
+                variant="outlined"
+                required
+              />
+            </div>
           </v-form>
         </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn text @click="showAddDialog = false">Cancelar</v-btn>
-          <v-btn color="primary" :disabled="!valid" @click="addUser">Agregar</v-btn>
+
+        <v-card-actions class="dialog-actions">
+          <v-btn
+            variant="text"
+            color="grey-darken-1"
+            @click="showAddDialog = false"
+          >
+            Cancelar
+          </v-btn>
+          <v-btn
+            color="primary"
+            variant="elevated"
+            :disabled="!valid"
+            @click="addUser"
+          >
+            <v-icon start>mdi-check</v-icon>
+            Agregar Usuario
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useReadersStore, useAuthStore } from '@/stores'
+import type { Reader } from '@/services/api'
 
 interface User {
   id: string
@@ -204,60 +311,71 @@ const newUser = ref({
   name: '',
   email: '',
   phone: '',
-  type: 'Estudiante'
+  cedula: '',
+  direccion: ''
 })
 
-const users = ref<User[]>([
-  {
-    id: '1',
-    name: 'María García',
-    email: 'maria.garcia@email.com',
-    type: 'Estudiante',
-    color: 'blue',
-    loansCount: 12,
-    activeLoans: 2,
-    lastLoan: 'Hace 2 días'
-  },
-  {
-    id: '2',
-    name: 'Carlos López',
-    email: 'carlos.lopez@email.com',
-    type: 'Profesor',
-    color: 'green',
-    loansCount: 24,
-    activeLoans: 1,
-    lastLoan: 'Hace 1 semana'
-  },
-  {
-    id: '3',
-    name: 'Ana Martínez',
-    email: 'ana.martinez@email.com',
-    type: 'Investigador',
-    color: 'purple',
-    loansCount: 8,
-    activeLoans: 0,
-    lastLoan: 'Hace 3 días'
-  }
-])
+const readersStore = useReadersStore()
+const authStore = useAuthStore()
 
-const filterOptions = ['Todos', 'Estudiante', 'Profesor', 'Investigador', 'Visitante']
-const sortOptions = ['Nombre', 'Préstamos', 'Último préstamo']
-const userTypes = ['Estudiante', 'Profesor', 'Investigador', 'Visitante']
+const isLoading = computed(() => readersStore.loading)
+const error = computed(() => readersStore.error)
+
+const filterOptions = ['Todos']
+const sortOptions = ['Nombre', 'Fecha de creación', 'Préstamos']
+const userTypes = ['Lector']
 
 const nameRules = [
   (v: string) => !!v || 'El nombre es requerido',
-  (v: string) => v.length >= 2 || 'El nombre debe tener al menos 2 caracteres'
+  (v: string) => v.length >= 3 || 'El nombre debe tener al menos 3 caracteres'
 ]
 
-const emailRules = [
-  (v: string) => !!v || 'El correo es requerido',
-  (v: string) => /.+@.+\..+/.test(v) || 'Correo inválido'
+const cedulaRules = [
+  (v: string) => !!v || 'La cédula es requerida',
+  (v: string) => v.length >= 3 || 'La cédula debe tener al menos 3 caracteres'
 ]
+
+const phoneRules = [
+  (v: string) => !!v || 'El teléfono es requerido',
+  (v: string) => v.length >= 3 || 'El teléfono debe tener al menos 3 caracteres'
+]
+
+const direccionRules = [
+  (v: string) => !!v || 'La dirección es requerida',
+  (v: string) => v.length >= 3 || 'La dirección debe tener al menos 3 caracteres'
+]
+
+const emailOptionalRules = [
+  (v: string) => !v || /.+@.+\..+/.test(v) || 'Correo inválido'
+]
+
+const users = computed(() => {
+  const gradients = [
+    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+    'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+    'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+    'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)'
+  ]
+  
+  return readersStore.readers.map((reader: Reader, index: number): User => ({
+    id: reader.id,
+    name: reader.nombre,
+    email: reader.email || 'Sin email',
+    phone: reader.telefono,
+    type: reader.tipo || 'Lector',
+    color: gradients[index % gradients.length],
+    loansCount: 0,
+    activeLoans: 0,
+    lastLoan: formatRelativeTime(reader.fechaCreacion)
+  }))
+})
 
 const filteredUsers = computed(() => {
   let filtered = users.value
 
-  // Filter by search
   if (search.value) {
     filtered = filtered.filter(user =>
       user.name.toLowerCase().includes(search.value.toLowerCase()) ||
@@ -265,18 +383,12 @@ const filteredUsers = computed(() => {
     )
   }
 
-  // Filter by type
-  if (filterType.value !== 'Todos') {
-    filtered = filtered.filter(user => user.type === filterType.value)
-  }
-
-  // Sort
   filtered.sort((a, b) => {
     switch (sortBy.value) {
+      case 'Fecha de creación':
+        return new Date(b.lastLoan).getTime() - new Date(a.lastLoan).getTime()
       case 'Préstamos':
         return b.loansCount - a.loansCount
-      case 'Último préstamo':
-        return new Date(b.lastLoan).getTime() - new Date(a.lastLoan).getTime()
       default:
         return a.name.localeCompare(b.name)
     }
@@ -295,70 +407,505 @@ const getUserInitials = (name: string): string => {
 
 const getTypeColor = (type: string): string => {
   const colors: Record<string, string> = {
-    'Estudiante': 'blue',
-    'Profesor': 'green',
-    'Investigador': 'purple',
-    'Visitante': 'orange'
+    'ESTUDIANTE': 'blue',
+    'PROFESOR': 'purple',
+    'EXTERNO': 'green',
+    'Lector': 'blue'
   }
-  return colors[type] || 'grey'
+  return colors[type] || 'blue'
 }
 
-const addUser = () => {
-  const colors = ['blue', 'green', 'purple', 'orange', 'red', 'indigo']
-  const randomColor = colors[Math.floor(Math.random() * colors.length)]
-  
-  users.value.push({
-    id: Date.now().toString(),
-    name: newUser.value.name,
-    email: newUser.value.email,
-    phone: newUser.value.phone,
-    type: newUser.value.type,
-    color: randomColor,
-    loansCount: 0,
-    activeLoans: 0,
-    lastLoan: 'Nunca'
-  })
+const getReaderCedula = (userId: string): string => {
+  const reader = readersStore.readers.find(r => r.id === userId)
+  return reader?.identificacion || 'N/A'
+}
 
-  // Reset form
-  newUser.value = {
-    name: '',
-    email: '',
-    phone: '',
-    type: 'Estudiante'
+const formatRelativeTime = (dateString?: string): string => {
+  if (!dateString) return 'Fecha desconocida'
+  const date = new Date(dateString)
+  if (isNaN(date.getTime())) return 'Fecha inválida'
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const minutes = Math.floor(diffMs / 60000)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+  if (days > 7) return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
+  if (days >= 1) return days === 1 ? 'Ayer' : `Hace ${days} días`
+  if (hours >= 1) return `Hace ${hours} horas`
+  return `Hace ${minutes} minutos`
+}
+
+const addUser = async () => {
+  if (!authStore.user?.bibliotecaId) {
+    readersStore.error = 'No se puede determinar la biblioteca'
+    return
   }
-  showAddDialog.value = false
+
+  const readerData: import('@/services/api').CreateReaderRequest = {
+    nombre: newUser.value.name,
+    email: newUser.value.email,
+    telefono: newUser.value.phone || undefined,
+    identificacion: newUser.value.cedula,
+    tipo: 'EXTERNO',
+    bibliotecaId: authStore.user.bibliotecaId
+  }
+
+  const created = await readersStore.createReader(readerData)
+  if (created) {
+    newUser.value = {
+      name: '',
+      email: '',
+      phone: '',
+      cedula: '',
+      direccion: ''
+    }
+    showAddDialog.value = false
+    // Reload data
+    loadData()
+  }
 }
 
 const viewUser = (user: User) => {
-  // TODO: Implement view user details
   console.log('View user:', user)
 }
 
 const editUser = (user: User) => {
-  // TODO: Implement edit user
   console.log('Edit user:', user)
 }
 
-const deleteUser = (user: User) => {
-  const index = users.value.findIndex(u => u.id === user.id)
-  if (index > -1) {
-    users.value.splice(index, 1)
+const deleteUser = async (user: User) => {
+  if (confirm(`¿Está seguro de que desea eliminar a ${user.name}?`)) {
+    await readersStore.deleteReader(user.id)
   }
 }
+
+const loadData = async () => {
+  if (authStore.user?.bibliotecaId) {
+    await readersStore.fetchReaders(authStore.user.bibliotecaId, 1, 100)
+  }
+}
+
+onMounted(() => {
+  loadData()
+})
+
+// Watch for search changes (debounced)
+let searchDebounce: number | undefined
+watch(search, (newSearch: string) => {
+  const bibliotecaId = authStore.user?.bibliotecaId
+  if (!bibliotecaId) return
+  if (searchDebounce) window.clearTimeout(searchDebounce)
+  searchDebounce = window.setTimeout(() => {
+    if (newSearch) {
+      readersStore.searchReaders(newSearch, bibliotecaId)
+    } else {
+      readersStore.fetchReaders(bibliotecaId, 1, 100)
+    }
+  }, 500)
+})
+
+// Watch for filter changes
+watch(filterType, () => {
+  if (authStore.user?.bibliotecaId) {
+    if (filterType.value !== 'Todos') {
+      readersStore.fetchReadersByType(filterType.value, authStore.user.bibliotecaId)
+    } else {
+      readersStore.fetchReaders(authStore.user.bibliotecaId, 1, 100)
+    }
+  }
+})
 </script>
 
 <style scoped>
+/* Container */
+.users-container {
+  min-height: 100vh;
+  background: #F8FAFC;
+}
+
+/* Header */
+.header-section {
+  background: linear-gradient(135deg, #1E3A8A 0%, #7C3AED 100%);
+  padding: 32px 0;
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  margin: 0;
+  font-weight: 800;
+  font-size: clamp(24px, 2.4vw, 32px);
+  color: #ffffff;
+}
+
+.page-subtitle {
+  margin: 4px 0 0 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+}
+
+.add-btn {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  text-transform: none;
+  font-weight: 600;
+}
+
+/* Content */
+.content-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Filters */
+.filters-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+  border: 1px solid #E2E8F0;
+}
+
+.filters-header {
+  margin-bottom: 20px;
+}
+
+.filters-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.filters-subtitle {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  color: #64748B;
+}
+
+.filters-content {
+  display: grid;
+  gap: 16px;
+}
+
+.search-field {
+  grid-column: 1 / -1;
+}
+
+.filter-selects {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Section Header */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+/* Users Grid */
+.users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 24px;
+}
+
 .user-card {
-  transition: transform 0.2s ease;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid #E2E8F0;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .user-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+  border-color: #CBD5E1;
+}
+
+.user-avatar-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.user-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.avatar-text {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.type-chip {
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.user-info {
+  margin-bottom: 20px;
+}
+
+.user-name {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.user-cedula {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.user-phone {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  color: #64748B;
+}
+
+.user-email {
+  margin: 0;
+  font-size: 12px;
+  color: #94A3B8;
 }
 
 .user-stats {
+  display: flex;
+  align-items: center;
   background: #F8FAFC;
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.stat-item {
+  flex: 1;
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 20px;
+  font-weight: 800;
+  color: #1E293B;
+}
+
+.stat-label {
+  display: block;
+  font-size: 12px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 32px;
+  background: #E2E8F0;
+  margin: 0 16px;
+}
+
+.user-meta {
+  margin-bottom: 20px;
+}
+
+.last-loan {
+  margin: 0;
+  font-size: 13px;
+  color: #64748B;
+}
+
+.user-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Loading State */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px 24px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #E2E8F0;
+}
+
+.loading-text {
+  margin: 0;
+  color: #64748B;
+  font-size: 14px;
+}
+
+/* Error State */
+.error-state {
+  margin-bottom: 24px;
+}
+
+.error-alert {
+  border-radius: 16px;
+}
+
+.error-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.error-content p {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 2px dashed #E2E8F0;
+}
+
+.empty-icon {
+  margin-bottom: 16px;
+}
+
+.empty-title {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.empty-subtitle {
+  margin: 0 0 24px 0;
+  font-size: 14px;
+  color: #64748B;
+}
+
+/* Dialog */
+.dialog-card {
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.dialog-header {
+  padding: 24px;
+  background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dialog-icon {
+  width: 48px;
+  height: 48px;
+  background: #ffffff;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dialog-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.dialog-subtitle {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  color: #64748B;
+}
+
+.dialog-content {
+  padding: 24px;
+}
+
+.form-row {
+  margin-bottom: 16px;
+}
+
+.dialog-actions {
+  padding: 16px 24px 24px 24px;
+  gap: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .filter-selects {
+    grid-template-columns: 1fr;
+  }
+
+  .users-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-actions {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-section {
+    padding: 16px;
+  }
+
+  .filters-card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .user-card {
+    padding: 20px;
+    border-radius: 16px;
+  }
 }
 </style>

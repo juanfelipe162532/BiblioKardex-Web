@@ -1,52 +1,24 @@
 <template>
   <div class="dashboard-container">
-    <!-- Modern Header Section -->
-    <div class="header-section">
-      <div class="header-content">
-        <div class="welcome-section">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+      <div class="welcome-content">
+        <div class="welcome-header">
+          <div class="welcome-logo">
+            <img 
+              src="@/assets/logo.png" 
+              alt="BiblioKardex Logo" 
+              class="dashboard-logo"
+            />
+          </div>
           <div class="greeting">
             <h1 class="display-title">Hola, {{ userName }}</h1>
             <p class="subtitle">Aquí tienes un resumen de tu biblioteca</p>
-          </div>
-          <div class="header-actions">
-            <v-btn icon variant="text" size="large" class="notification-btn">
-              <v-badge color="error" dot>
-                <v-icon>mdi-bell-outline</v-icon>
-              </v-badge>
-            </v-btn>
-            <v-avatar size="44" class="user-avatar">
-              <span class="avatar-text">{{ userInitials }}</span>
-            </v-avatar>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Quick Actions Section -->
-    <div class="content-section">
-      <div class="section-header">
-        <h2 class="section-title">Acciones Rápidas</h2>
-        <p class="section-subtitle">Gestiona tu biblioteca de manera eficiente</p>
-      </div>
-      
-      <div class="quick-actions-grid">
-        <div 
-          v-for="(action, index) in quickActions" 
-          :key="index"
-          class="action-card"
-          @click="handleStepClick(action.action)"
-        >
-          <div class="action-icon">
-            <v-icon :color="action.color" size="24">{{ action.icon }}</v-icon>
-          </div>
-          <div class="action-content">
-            <h3 class="action-title">{{ action.title }}</h3>
-            <p class="action-description">{{ action.subtitle }}</p>
-          </div>
-          <v-icon class="action-arrow" size="16">mdi-chevron-right</v-icon>
-        </div>
-      </div>
-    </div>
 
     <!-- Statistics Section -->
     <div class="content-section">
@@ -110,6 +82,30 @@
       </div>
     </div>
 
+    <!-- Analytics Section -->
+    <div class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">Análisis y Tendencias</h2>
+        <p class="section-subtitle">Visualización de datos de tu biblioteca</p>
+      </div>
+      
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3 class="chart-title">Préstamos por Mes</h3>
+          <div class="chart-container">
+            <canvas ref="loansChart" id="loansChart"></canvas>
+          </div>
+        </div>
+        
+        <div class="chart-card">
+          <h3 class="chart-title">Categorías Populares</h3>
+          <div class="chart-container">
+            <canvas ref="categoriesChart" id="categoriesChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- AI Features Section -->
     <div class="content-section">
       <div class="ai-features-card">
@@ -135,35 +131,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { useDashboardStore } from '@/stores/dashboard'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { useDashboardStore, useAuthStore } from '@/stores'
+import { Chart, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, ArcElement } from 'chart.js'
 
-const router = useRouter()
+Chart.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, ArcElement)
+
 const authStore = useAuthStore()
 const dashboard = useDashboardStore()
+
+const loansChart = ref<HTMLCanvasElement>()
+const categoriesChart = ref<HTMLCanvasElement>()
 
 const userName = computed(() => {
   const name = authStore.user?.nombre || 'Usuario'
   return name.split(' ')[0]
 })
 
-const userInitials = computed(() => {
-  const name = authStore.user?.nombre || 'U'
-  const parts = name.trim().split(/\s+/).filter(p => p.length > 0)
-  if (parts.length === 0) return 'U'
-  const first = parts[0][0]
-  const second = parts.length > 1 ? parts[1][0] : ''
-  return (first + second).toUpperCase()
-})
 
-const quickActions = [
-  { title: 'Escanear Libro', subtitle: 'Agregar nuevos libros al sistema', icon: 'mdi-camera-outline', color: '#6366F1', action: 'scan' },
-  { title: 'Crear Préstamo', subtitle: 'Registrar un nuevo préstamo', icon: 'mdi-account-plus-outline', color: '#F59E0B', action: 'loan' },
-  { title: 'Procesar Devolución', subtitle: 'Marcar libro como disponible', icon: 'mdi-keyboard-return', color: '#10B981', action: 'return' },
-  { title: 'Ver Inventario', subtitle: 'Revisar estado del inventario', icon: 'mdi-clipboard-list-outline', color: '#8B5CF6', action: 'inventory' }
-]
 
 const statisticsLoading = computed(() => dashboard.loading)
 
@@ -220,26 +205,107 @@ const aiFeatures = [
   { label: 'Análisis de texto', icon: 'mdi-chart-line' }
 ]
 
-const handleStepClick = (action: string) => {
-  switch (action) {
-    case 'scan':
-      // TODO: Página de escaneo en web
-      break
-    case 'loan':
-      // TODO: Página de préstamo en web
-      break
-    case 'return':
-    case 'inventory':
-      router.push('/reports')
-      break
+
+const createCharts = async () => {
+  await nextTick()
+  
+  // Loans Chart
+  if (loansChart.value) {
+    new Chart(loansChart.value, {
+      type: 'bar',
+      data: {
+        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+        datasets: [{
+          label: 'Préstamos',
+          data: [12, 19, 8, 15, 25, 18],
+          backgroundColor: 'rgba(99, 102, 241, 0.8)',
+          borderColor: 'rgba(99, 102, 241, 1)',
+          borderWidth: 2,
+          borderRadius: 8,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1F2937',
+            titleColor: '#F9FAFB',
+            bodyColor: '#F9FAFB',
+            borderColor: '#374151',
+            borderWidth: 1,
+            cornerRadius: 8
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: '#F1F5F9' },
+            ticks: { color: '#64748B', font: { size: 12 } }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { color: '#64748B', font: { size: 12 } }
+          }
+        }
+      }
+    })
+  }
+
+  // Categories Chart
+  if (categoriesChart.value) {
+    new Chart(categoriesChart.value, {
+      type: 'doughnut',
+      data: {
+        labels: ['Ficción', 'Ciencia', 'Historia', 'Arte', 'Biografía'],
+        datasets: [{
+          data: [30, 25, 20, 15, 10],
+          backgroundColor: [
+            '#6366F1',
+            '#8B5CF6',
+            '#06B6D4',
+            '#10B981',
+            '#F59E0B'
+          ],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              usePointStyle: true,
+              padding: 20,
+              font: { size: 12 },
+              color: '#64748B'
+            }
+          },
+          tooltip: {
+            backgroundColor: '#1F2937',
+            titleColor: '#F9FAFB',
+            bodyColor: '#F9FAFB',
+            borderColor: '#374151',
+            borderWidth: 1,
+            cornerRadius: 8
+          }
+        }
+      }
+    })
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   const id = authStore.user?.bibliotecaId
   if (id) {
     dashboard.loadStatistics(id)
   }
+  await createCharts()
 })
 
 // Recargar si cambia la biblioteca del usuario
@@ -250,27 +316,42 @@ watch(() => authStore.user?.bibliotecaId, (newId) => {
 
 <style scoped>
 /* Container */
-.dashboard-container {}
-
-/* Header */
-.header-section {
-  background: linear-gradient(135deg, #1E3A8A 0%, #7C3AED 100%);
-  border-bottom-left-radius: 32px;
-  border-bottom-right-radius: 32px;
+.dashboard-container {
+  background: #F8FAFC;
+  min-height: 100vh;
 }
 
-.header-content {
+/* Welcome */
+.welcome-section {
+  background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
+  padding: 32px 0;
+}
+
+.welcome-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 0 24px;
 }
 
-.welcome-section {
+.welcome-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.welcome-logo {
+  flex-shrink: 0;
+}
+
+.dashboard-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.greeting {
+  flex: 1;
 }
 
 .display-title {
@@ -285,24 +366,6 @@ watch(() => authStore.user?.bibliotecaId, (newId) => {
   color: rgba(255, 255, 255, 0.85);
   font-size: 14px;
 }
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.notification-btn:hover {
-  background: rgba(255, 255, 255, 0.15) !important;
-}
-
-.user-avatar {
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-  background: #ffffff;
-}
-
-.avatar-text { color: #1E3A8A; font-weight: 700; }
 
 /* Sections */
 .content-section {
@@ -331,58 +394,6 @@ watch(() => authStore.user?.bibliotecaId, (newId) => {
   color: #64748B;
 }
 
-/* Quick Actions */
-.quick-actions-grid {
-  margin-top: 16px;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-.action-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #ffffff;
-  border: 1px solid #E2E8F0;
-  border-radius: 16px;
-  padding: 16px;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.action-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(30, 58, 138, 0.35);
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.06);
-}
-
-.action-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: #F1F5F9;
-  display: grid;
-  place-items: center;
-}
-
-.action-content { flex: 1; }
-
-.action-title {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: #1E293B;
-}
-
-.action-description {
-  margin: 2px 0 0 0;
-  font-size: 12px;
-  color: #64748B;
-}
-
-.action-arrow { color: #94A3B8; transition: transform 0.2s ease; }
-.action-card:hover .action-arrow { transform: translateX(2px); }
 
 /* Statistics */
 .stats-grid {
@@ -516,21 +527,72 @@ watch(() => authStore.user?.bibliotecaId, (newId) => {
 .ai-feature-chip:hover { transform: translateY(-1px); }
 .feature-icon { color: #ffffff; }
 
+/* Charts */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.chart-card {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.chart-card:hover {
+  transform: translateY(-2px);
+  border-color: #CBD5E1;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08), 0 4px 8px rgba(15, 23, 42, 0.04);
+}
+
+.chart-title {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.chart-container {
+  position: relative;
+  height: 280px;
+  width: 100%;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
-  .quick-actions-grid { grid-template-columns: repeat(3, 1fr); }
   .stats-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (max-width: 900px) {
-  .quick-actions-grid { grid-template-columns: repeat(2, 1fr); }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .charts-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .welcome-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+  
+  .dashboard-logo {
+    width: 50px;
+    height: 50px;
+  }
 }
 
 @media (max-width: 600px) {
-  .header-content { padding: 20px; }
+  .welcome-content { padding: 0 20px; }
   .content-section { padding: 20px; }
-  .quick-actions-grid { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: 1fr; }
+  
+  .dashboard-logo {
+    width: 45px;
+    height: 45px;
+  }
 }
 </style>

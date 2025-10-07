@@ -1,293 +1,397 @@
 <template>
-  <v-container fluid class="pa-6">
-    <!-- Header -->
-    <div class="mb-6">
-      <h1 class="text-h4 font-weight-bold text--primary">Perfil de Usuario</h1>
-      <p class="text-body-1 text--secondary mt-1">Gestiona tu información personal y configuración</p>
+  <div class="profile-container">
+    <!-- Modern Header Section -->
+    <div class="header-section">
+      <div class="header-content">
+        <div class="title-section">
+          <h1 class="page-title">Perfil de Usuario</h1>
+          <p class="page-subtitle">Gestiona tu información personal y configuración</p>
+        </div>
+      </div>
     </div>
 
-    <v-row>
-      <!-- Profile Info -->
-      <v-col cols="12" md="4">
-        <v-card elevation="2" class="text-center pa-6">
-          <v-avatar size="120" color="primary" class="mb-4">
-            <span class="text-h3 white--text font-weight-bold">{{ userInitials }}</span>
-          </v-avatar>
-          
-          <h2 class="text-h5 font-weight-bold text--primary mb-1">{{ authStore.user?.nombre }}</h2>
-          <p class="text-body-1 text--secondary mb-2">{{ authStore.user?.email }}</p>
-          
-          <v-chip color="success" text-color="white" class="mb-4">
-            <v-icon left small>mdi-check-circle</v-icon>
-            Cuenta Verificada
-          </v-chip>
-          
-          <div class="profile-stats">
-            <v-row class="text-center">
-              <v-col cols="4">
-                <p class="text-h5 font-weight-bold text--primary mb-0">156</p>
-                <p class="text-caption text--secondary">Libros Agregados</p>
-              </v-col>
-              <v-col cols="4">
-                <p class="text-h5 font-weight-bold text--primary mb-0">1,248</p>
-                <p class="text-caption text--secondary">Préstamos</p>
-              </v-col>
-              <v-col cols="4">
-                <p class="text-h5 font-weight-bold text--primary mb-0">342</p>
-                <p class="text-caption text--secondary">Usuarios</p>
-              </v-col>
-            </v-row>
+    <!-- Profile Overview Section -->
+    <div class="content-section">
+      <div class="profile-overview">
+        <!-- User Card -->
+        <div class="user-card">
+          <div class="user-avatar-section">
+            <div class="user-avatar" :style="`background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)`">
+              <span class="avatar-text">{{ userInitials }}</span>
+            </div>
+            <v-btn
+              variant="outlined"
+              color="primary"
+              size="small"
+              class="avatar-btn"
+            >
+              <v-icon start size="16">mdi-camera</v-icon>
+              Cambiar Foto
+            </v-btn>
           </div>
           
-          <v-btn color="primary" outlined block class="mt-4 text-none">
-            <v-icon left>mdi-camera</v-icon>
-            Cambiar Foto
-          </v-btn>
-        </v-card>
-      </v-col>
+          <div class="user-info">
+            <h2 class="user-name">{{ authStore.user?.nombre }}</h2>
+            <p class="user-email">{{ authStore.user?.email }}</p>
+            <div class="user-status">
+              <v-chip color="success" variant="tonal" size="small">
+                <v-icon start size="16">mdi-check-circle</v-icon>
+                Cuenta Verificada
+              </v-chip>
+            </div>
+          </div>
+        </div>
 
-      <!-- Profile Settings -->
-      <v-col cols="12" md="8">
-        <v-tabs v-model="activeTab" background-color="transparent" color="primary">
-          <v-tab>Información Personal</v-tab>
-          <v-tab>Biblioteca</v-tab>
-          <v-tab>Configuración</v-tab>
-          <v-tab>Seguridad</v-tab>
-        </v-tabs>
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <v-icon color="primary" size="20">mdi-book-multiple</v-icon>
+            </div>
+            <div class="stat-content">
+              <span class="stat-value">156</span>
+              <span class="stat-label">Libros Agregados</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <v-icon color="success" size="20">mdi-hand-extended</v-icon>
+            </div>
+            <div class="stat-content">
+              <span class="stat-value">1,248</span>
+              <span class="stat-label">Préstamos</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <v-icon color="warning" size="20">mdi-account-group</v-icon>
+            </div>
+            <div class="stat-content">
+              <span class="stat-value">342</span>
+              <span class="stat-label">Usuarios</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        <v-tabs-items v-model="activeTab">
-          <!-- Personal Information -->
-          <v-tab-item>
-            <v-card elevation="2" class="mt-4">
-              <v-card-title>Información Personal</v-card-title>
-              <v-card-text>
-                <v-form ref="personalForm" v-model="personalValid">
-                  <v-row>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="personalInfo.nombre"
-                        label="Nombre completo"
-                        outlined
-                        :rules="nameRules"
-                      />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="personalInfo.email"
-                        label="Correo electrónico"
-                        outlined
-                        :rules="emailRules"
-                      />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="personalInfo.telefono"
-                        label="Teléfono"
-                        outlined
-                      />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="personalInfo.cargo"
-                        label="Cargo"
-                        outlined
-                      />
-                    </v-col>
-                  </v-row>
-                </v-form>
-              </v-card-text>
-              <v-card-actions>
-                <v-spacer />
-                <v-btn color="primary" :disabled="!personalValid" @click="savePersonalInfo">
-                  Guardar Cambios
-                </v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-tab-item>
+    <!-- Settings Tabs Section -->
+    <div class="content-section">
+      <div class="settings-container">
+        <div class="tabs-header">
+          <h2 class="section-title">Configuración</h2>
+          <p class="section-subtitle">Personaliza tu experiencia</p>
+        </div>
 
-          <!-- Library Info -->
-          <v-tab-item>
-            <v-card elevation="2" class="mt-4">
-              <v-card-title>Información de Biblioteca</v-card-title>
-              <v-card-text>
-                <v-form ref="libraryForm" v-model="libraryValid">
-                  <v-row>
-                    <v-col cols="12">
-                      <v-text-field
-                        v-model="libraryInfo.nombre"
-                        label="Nombre de la biblioteca"
-                        outlined
-                        :rules="nameRules"
-                      />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="libraryInfo.direccion"
-                        label="Dirección"
-                        outlined
-                      />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="libraryInfo.telefono"
-                        label="Teléfono"
-                        outlined
-                      />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-select
-                        v-model="libraryInfo.tipo"
-                        :items="libraryTypes"
-                        label="Tipo de biblioteca"
-                        outlined
-                      />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="libraryInfo.horario"
-                        label="Horario de atención"
-                        outlined
-                        placeholder="Ej: Lun-Vie 8:00-18:00"
-                      />
-                    </v-col>
-                  </v-row>
-                </v-form>
-              </v-card-text>
-              <v-card-actions>
-                <v-spacer />
-                <v-btn color="primary" :disabled="!libraryValid" @click="saveLibraryInfo">
-                  Guardar Cambios
-                </v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-tab-item>
+        <div class="tabs-container">
+          <div class="tabs-nav">
+            <div
+              v-for="(tab, index) in tabs"
+              :key="index"
+              class="tab-item"
+              :class="{ active: activeTab === index }"
+              @click="activeTab = index"
+            >
+              <v-icon :color="activeTab === index ? 'primary' : 'grey-darken-1'" size="20">
+                {{ tab.icon }}
+              </v-icon>
+              <span class="tab-label">{{ tab.label }}</span>
+            </div>
+          </div>
 
-          <!-- Configuration -->
-          <v-tab-item>
-            <v-card elevation="2" class="mt-4">
-              <v-card-title>Configuración General</v-card-title>
-              <v-card-text>
-                <v-list>
-                  <v-list-item>
-                    <v-list-item-content>
-                      <v-list-item-title>Notificaciones por correo</v-list-item-title>
-                      <v-list-item-subtitle>Recibir alertas de préstamos vencidos</v-list-item-subtitle>
-                    </v-list-item-content>
-                    <v-list-item-action>
-                      <v-switch v-model="config.emailNotifications" color="primary" />
-                    </v-list-item-action>
-                  </v-list-item>
+          <div class="tab-content">
+            <!-- Personal Information Tab -->
+            <div v-if="activeTab === 0" class="tab-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">Información Personal</h3>
+                <p class="panel-subtitle">Actualiza tus datos personales</p>
+              </div>
+              
+              <v-form ref="personalForm" v-model="personalValid" class="form-content">
+                <div class="form-grid">
+                  <div class="form-field">
+                    <v-text-field
+                      v-model="personalInfo.nombre"
+                      label="Nombre completo"
+                      variant="outlined"
+                      :rules="nameRules"
+                    />
+                  </div>
+                  <div class="form-field">
+                    <v-text-field
+                      v-model="personalInfo.email"
+                      label="Correo electrónico"
+                      variant="outlined"
+                      :rules="emailRules"
+                    />
+                  </div>
+                  <div class="form-field">
+                    <v-text-field
+                      v-model="personalInfo.telefono"
+                      label="Teléfono"
+                      variant="outlined"
+                    />
+                  </div>
+                  <div class="form-field">
+                    <v-text-field
+                      v-model="personalInfo.cargo"
+                      label="Cargo"
+                      variant="outlined"
+                    />
+                  </div>
+                </div>
+                
+                <div class="form-actions">
+                  <v-btn
+                    color="primary"
+                    variant="elevated"
+                    :disabled="!personalValid"
+                    @click="savePersonalInfo"
+                  >
+                    <v-icon start>mdi-check</v-icon>
+                    Guardar Cambios
+                  </v-btn>
+                </div>
+              </v-form>
+            </div>
 
-                  <v-list-item>
-                    <v-list-item-content>
-                      <v-list-item-title>Tema oscuro</v-list-item-title>
-                      <v-list-item-subtitle>Cambiar apariencia de la aplicación</v-list-item-subtitle>
-                    </v-list-item-content>
-                    <v-list-item-action>
-                      <v-switch v-model="config.darkTheme" color="primary" />
-                    </v-list-item-action>
-                  </v-list-item>
+            <!-- Library Information Tab -->
+            <div v-if="activeTab === 1" class="tab-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">Información de Biblioteca</h3>
+                <p class="panel-subtitle">Configura los datos de tu biblioteca</p>
+              </div>
+              
+              <v-form ref="libraryForm" v-model="libraryValid" class="form-content">
+                <div class="form-grid">
+                  <div class="form-field full-width">
+                    <v-text-field
+                      v-model="libraryInfo.nombre"
+                      label="Nombre de la biblioteca"
+                      variant="outlined"
+                      :rules="nameRules"
+                    />
+                  </div>
+                  <div class="form-field">
+                    <v-text-field
+                      v-model="libraryInfo.direccion"
+                      label="Dirección"
+                      variant="outlined"
+                    />
+                  </div>
+                  <div class="form-field">
+                    <v-text-field
+                      v-model="libraryInfo.telefono"
+                      label="Teléfono"
+                      variant="outlined"
+                    />
+                  </div>
+                  <div class="form-field">
+                    <v-select
+                      v-model="libraryInfo.tipo"
+                      :items="libraryTypes"
+                      label="Tipo de biblioteca"
+                      variant="outlined"
+                    />
+                  </div>
+                  <div class="form-field">
+                    <v-text-field
+                      v-model="libraryInfo.horario"
+                      label="Horario de atención"
+                      variant="outlined"
+                      placeholder="Ej: Lun-Vie 8:00-18:00"
+                    />
+                  </div>
+                </div>
+                
+                <div class="form-actions">
+                  <v-btn
+                    color="primary"
+                    variant="elevated"
+                    :disabled="!libraryValid"
+                    @click="saveLibraryInfo"
+                  >
+                    <v-icon start>mdi-check</v-icon>
+                    Guardar Cambios
+                  </v-btn>
+                </div>
+              </v-form>
+            </div>
 
-                  <v-list-item>
-                    <v-list-item-content>
-                      <v-list-item-title>Recordatorios automáticos</v-list-item-title>
-                      <v-list-item-subtitle>Enviar recordatorios de devolución</v-list-item-subtitle>
-                    </v-list-item-content>
-                    <v-list-item-action>
-                      <v-switch v-model="config.autoReminders" color="primary" />
-                    </v-list-item-action>
-                  </v-list-item>
+            <!-- Configuration Tab -->
+            <div v-if="activeTab === 2" class="tab-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">Configuración General</h3>
+                <p class="panel-subtitle">Personaliza el comportamiento de la aplicación</p>
+              </div>
+              
+              <div class="settings-list">
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <h4 class="setting-title">Notificaciones por correo</h4>
+                    <p class="setting-description">Recibir alertas de préstamos vencidos y recordatorios</p>
+                  </div>
+                  <div class="setting-control">
+                    <v-switch
+                      v-model="config.emailNotifications"
+                      color="primary"
+                      hide-details
+                    />
+                  </div>
+                </div>
 
-                  <v-list-item>
-                    <v-list-item-content>
-                      <v-list-item-title>Periodo de préstamo por defecto</v-list-item-title>
-                    </v-list-item-content>
-                    <v-list-item-action>
-                      <v-select
-                        v-model="config.defaultLoanPeriod"
-                        :items="loanPeriods"
-                        dense
-                        outlined
-                        style="max-width: 120px"
-                      />
-                    </v-list-item-action>
-                  </v-list-item>
-                </v-list>
-              </v-card-text>
-              <v-card-actions>
-                <v-spacer />
-                <v-btn color="primary" @click="saveConfig">
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <h4 class="setting-title">Tema oscuro</h4>
+                    <p class="setting-description">Cambiar la apariencia visual de la aplicación</p>
+                  </div>
+                  <div class="setting-control">
+                    <v-switch
+                      v-model="config.darkTheme"
+                      color="primary"
+                      hide-details
+                    />
+                  </div>
+                </div>
+
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <h4 class="setting-title">Recordatorios automáticos</h4>
+                    <p class="setting-description">Enviar recordatorios automáticos de devolución</p>
+                  </div>
+                  <div class="setting-control">
+                    <v-switch
+                      v-model="config.autoReminders"
+                      color="primary"
+                      hide-details
+                    />
+                  </div>
+                </div>
+
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <h4 class="setting-title">Periodo de préstamo por defecto</h4>
+                    <p class="setting-description">Duración estándar para nuevos préstamos</p>
+                  </div>
+                  <div class="setting-control">
+                    <v-select
+                      v-model="config.defaultLoanPeriod"
+                      :items="loanPeriods"
+                      variant="outlined"
+                      density="compact"
+                      style="max-width: 140px"
+                      hide-details
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div class="form-actions">
+                <v-btn
+                  color="primary"
+                  variant="elevated"
+                  @click="saveConfig"
+                >
+                  <v-icon start>mdi-check</v-icon>
                   Guardar Configuración
                 </v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-tab-item>
+              </div>
+            </div>
 
-          <!-- Security -->
-          <v-tab-item>
-            <v-card elevation="2" class="mt-4">
-              <v-card-title>Seguridad</v-card-title>
-              <v-card-text>
-                <v-form ref="securityForm" v-model="securityValid">
-                  <h3 class="text-h6 mb-4">Cambiar Contraseña</h3>
-                  <v-text-field
-                    v-model="security.currentPassword"
-                    label="Contraseña actual"
-                    type="password"
-                    outlined
-                    :rules="passwordRules"
-                  />
-                  <v-text-field
-                    v-model="security.newPassword"
-                    label="Nueva contraseña"
-                    type="password"
-                    outlined
-                    :rules="newPasswordRules"
-                  />
-                  <v-text-field
-                    v-model="security.confirmPassword"
-                    label="Confirmar nueva contraseña"
-                    type="password"
-                    outlined
-                    :rules="confirmPasswordRules"
-                  />
-                  
-                  <v-divider class="my-6" />
-                  
-                  <h3 class="text-h6 mb-4">Autenticación de Dos Factores</h3>
-                  <div class="d-flex align-center">
-                    <div class="flex-grow-1">
-                      <p class="text-body-1 mb-1">Estado: 
-                        <v-chip :color="security.twoFactorEnabled ? 'success' : 'warning'" small text-color="white">
-                          {{ security.twoFactorEnabled ? 'Activado' : 'Desactivado' }}
-                        </v-chip>
-                      </p>
-                      <p class="text-body-2 text--secondary">
-                        Agrega una capa extra de seguridad a tu cuenta
-                      </p>
+            <!-- Security Tab -->
+            <div v-if="activeTab === 3" class="tab-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">Seguridad</h3>
+                <p class="panel-subtitle">Protege tu cuenta con configuraciones de seguridad</p>
+              </div>
+              
+              <!-- Change Password Section -->
+              <div class="security-section">
+                <h4 class="security-title">Cambiar Contraseña</h4>
+                <v-form ref="securityForm" v-model="securityValid" class="form-content">
+                  <div class="form-grid password-grid">
+                    <div class="form-field full-width">
+                      <v-text-field
+                        v-model="security.currentPassword"
+                        label="Contraseña actual"
+                        type="password"
+                        variant="outlined"
+                        :rules="passwordRules"
+                      />
                     </div>
-                    <v-btn 
-                      :color="security.twoFactorEnabled ? 'error' : 'success'" 
-                      outlined
-                      @click="toggleTwoFactor"
+                    <div class="form-field">
+                      <v-text-field
+                        v-model="security.newPassword"
+                        label="Nueva contraseña"
+                        type="password"
+                        variant="outlined"
+                        :rules="newPasswordRules"
+                      />
+                    </div>
+                    <div class="form-field">
+                      <v-text-field
+                        v-model="security.confirmPassword"
+                        label="Confirmar nueva contraseña"
+                        type="password"
+                        variant="outlined"
+                        :rules="confirmPasswordRules"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div class="form-actions">
+                    <v-btn
+                      color="primary"
+                      variant="elevated"
+                      :disabled="!securityValid"
+                      @click="changePassword"
                     >
-                      {{ security.twoFactorEnabled ? 'Desactivar' : 'Activar' }}
+                      <v-icon start>mdi-lock</v-icon>
+                      Cambiar Contraseña
                     </v-btn>
                   </div>
                 </v-form>
-              </v-card-text>
-              <v-card-actions>
-                <v-spacer />
-                <v-btn color="primary" :disabled="!securityValid" @click="changePassword">
-                  Cambiar Contraseña
-                </v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-tab-item>
-        </v-tabs-items>
-      </v-col>
-    </v-row>
-  </v-container>
+              </div>
+
+              <!-- Two Factor Authentication -->
+              <div class="security-section">
+                <h4 class="security-title">Autenticación de Dos Factores</h4>
+                <div class="two-factor-card">
+                  <div class="two-factor-info">
+                    <div class="two-factor-status">
+                      <span class="status-label">Estado:</span>
+                      <v-chip
+                        :color="security.twoFactorEnabled ? 'success' : 'warning'"
+                        variant="tonal"
+                        size="small"
+                      >
+                        {{ security.twoFactorEnabled ? 'Activado' : 'Desactivado' }}
+                      </v-chip>
+                    </div>
+                    <p class="two-factor-description">
+                      Agrega una capa extra de seguridad a tu cuenta utilizando un código de verificación
+                    </p>
+                  </div>
+                  <div class="two-factor-action">
+                    <v-btn
+                      :color="security.twoFactorEnabled ? 'error' : 'success'"
+                      :variant="security.twoFactorEnabled ? 'outlined' : 'elevated'"
+                      @click="toggleTwoFactor"
+                    >
+                      <v-icon start>
+                        {{ security.twoFactorEnabled ? 'mdi-shield-off' : 'mdi-shield-check' }}
+                      </v-icon>
+                      {{ security.twoFactorEnabled ? 'Desactivar' : 'Activar' }}
+                    </v-btn>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -301,19 +405,26 @@ const personalValid = ref(false)
 const libraryValid = ref(false)
 const securityValid = ref(false)
 
+const tabs = [
+  { label: 'Personal', icon: 'mdi-account' },
+  { label: 'Biblioteca', icon: 'mdi-library' },
+  { label: 'Configuración', icon: 'mdi-cog' },
+  { label: 'Seguridad', icon: 'mdi-shield-check' }
+]
+
 const personalInfo = ref({
   nombre: authStore.user?.nombre || '',
   email: authStore.user?.email || '',
-  telefono: '',
-  cargo: 'Bibliotecario'
+  telefono: '+57 300 123 4567',
+  cargo: 'Bibliotecario Principal'
 })
 
 const libraryInfo = ref({
-  nombre: 'Biblioteca Central',
-  direccion: '',
-  telefono: '',
+  nombre: 'Biblioteca Central Universidad',
+  direccion: 'Calle 45 #23-67, Bogotá, Colombia',
+  telefono: '+57 1 234 5678',
   tipo: 'Universitaria',
-  horario: 'Lun-Vie 8:00-18:00'
+  horario: 'Lun-Vie 8:00-18:00, Sáb 9:00-14:00'
 })
 
 const config = ref({
@@ -344,14 +455,16 @@ const libraryTypes = [
   'Pública',
   'Escolar',
   'Especializada',
-  'Nacional'
+  'Nacional',
+  'Comunitaria'
 ]
 
 const loanPeriods = [
   '7 días',
   '15 días',
   '30 días',
-  '60 días'
+  '60 días',
+  '90 días'
 ]
 
 const nameRules = [
@@ -379,50 +492,457 @@ const confirmPasswordRules = [
 ]
 
 const savePersonalInfo = () => {
-  // TODO: Implement save personal info
   console.log('Saving personal info:', personalInfo.value)
 }
 
 const saveLibraryInfo = () => {
-  // TODO: Implement save library info
   console.log('Saving library info:', libraryInfo.value)
 }
 
 const saveConfig = () => {
-  // TODO: Implement save configuration
   console.log('Saving config:', config.value)
 }
 
 const changePassword = () => {
-  // TODO: Implement change password
   console.log('Changing password')
+  security.value.currentPassword = ''
+  security.value.newPassword = ''
+  security.value.confirmPassword = ''
 }
 
 const toggleTwoFactor = () => {
   security.value.twoFactorEnabled = !security.value.twoFactorEnabled
-  // TODO: Implement 2FA toggle
 }
 </script>
 
 <style scoped>
-.profile-stats {
+/* Container */
+.profile-container {
+  min-height: 100vh;
+  background: #F8FAFC;
+}
+
+/* Header */
+.header-section {
+  background: linear-gradient(135deg, #1E3A8A 0%, #7C3AED 100%);
+  padding: 32px 0;
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.page-title {
+  margin: 0;
+  font-weight: 800;
+  font-size: clamp(24px, 2.4vw, 32px);
+  color: #ffffff;
+}
+
+.page-subtitle {
+  margin: 4px 0 0 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+}
+
+/* Content */
+.content-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Profile Overview */
+.profile-overview {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.user-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 32px;
+  border: 1px solid #E2E8F0;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.user-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  border-color: #CBD5E1;
+}
+
+.user-avatar-section {
+  margin-bottom: 24px;
+}
+
+.user-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.avatar-text {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 32px;
+}
+
+.avatar-btn {
+  text-transform: none;
+  font-weight: 600;
+}
+
+.user-name {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.user-email {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: #64748B;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.stat-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  border-color: #CBD5E1;
+}
+
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  background: #F8FAFC;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-value {
+  display: block;
+  font-size: 20px;
+  font-weight: 800;
+  color: #1E293B;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #64748B;
+}
+
+/* Settings */
+.settings-container {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #E2E8F0;
+  overflow: hidden;
+}
+
+.tabs-header {
+  padding: 24px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.section-subtitle {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  color: #64748B;
+}
+
+.tabs-container {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+}
+
+.tabs-nav {
+  background: #F8FAFC;
+  border-right: 1px solid #E2E8F0;
+  padding: 0;
+}
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-right: 3px solid transparent;
+}
+
+.tab-item:hover {
+  background: #F1F5F9;
+}
+
+.tab-item.active {
+  background: #ffffff;
+  border-right-color: #6366F1;
+}
+
+.tab-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.tab-item.active .tab-label {
+  color: #1E293B;
+}
+
+.tab-content {
+  padding: 0;
+}
+
+.tab-panel {
+  padding: 32px;
+}
+
+.panel-header {
+  margin-bottom: 32px;
+}
+
+.panel-title {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.panel-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #64748B;
+}
+
+/* Forms */
+.form-content {
+  margin-bottom: 32px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.password-grid {
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.password-grid .form-field:not(.full-width) {
+  grid-column: auto;
+}
+
+.form-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Settings List */
+.settings-list {
+  margin-bottom: 32px;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.setting-item:last-child {
+  border-bottom: none;
+}
+
+.setting-info {
+  flex: 1;
+}
+
+.setting-title {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1E293B;
+}
+
+.setting-description {
+  margin: 0;
+  font-size: 14px;
+  color: #64748B;
+}
+
+.setting-control {
+  margin-left: 20px;
+}
+
+/* Security Sections */
+.security-section {
+  margin-bottom: 40px;
+}
+
+.security-section:last-child {
+  margin-bottom: 0;
+}
+
+.security-title {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.two-factor-card {
   background: #F8FAFC;
   border-radius: 12px;
-  padding: 16px;
-  margin-top: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
 }
 
-.v-tab {
-  font-weight: 500;
+.two-factor-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
-.v-list-item {
-  padding: 16px 0;
+.status-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1E293B;
 }
 
-@media (max-width: 960px) {
-  .pa-6 {
-    padding: 16px !important;
+.two-factor-description {
+  margin: 0;
+  font-size: 14px;
+  color: #64748B;
+}
+
+.two-factor-action {
+  flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .profile-overview {
+    grid-template-columns: 1fr;
+  }
+  
+  .tabs-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .tabs-nav {
+    border-right: none;
+    border-bottom: 1px solid #E2E8F0;
+    display: flex;
+    overflow-x: auto;
+  }
+  
+  .tab-item {
+    border-right: none;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+  }
+  
+  .tab-item.active {
+    border-right: none;
+    border-bottom-color: #6366F1;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .two-factor-card {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  
+  .tabs-nav {
+    padding: 0 24px;
+  }
+  
+  .tab-item {
+    padding: 16px 0;
+    margin-right: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-section {
+    padding: 16px;
+  }
+  
+  .user-card {
+    padding: 24px;
+  }
+  
+  .tab-panel {
+    padding: 24px;
+  }
+  
+  .form-actions {
+    justify-content: stretch;
+  }
+  
+  .form-actions .v-btn {
+    flex: 1;
   }
 }
 </style>

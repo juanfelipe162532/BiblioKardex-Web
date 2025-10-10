@@ -26,6 +26,7 @@
     "vuetify": "^3.9.0-beta.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.4.3",
     "@tsconfig/node22": "^22.0.2",
     "@types/node": "^22.16.5",
     "@vitejs/plugin-vue": "^6.0.1",

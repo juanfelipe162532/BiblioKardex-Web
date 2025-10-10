@@ -302,10 +302,37 @@ const startPolling = () => {
         // Start loading sequence
         loadingAuth.value = true
         loadingStep.value = 0
-        successMessage.value = `¡Bienvenido, ${data.data.user.nombre}!`
+        
+        // Handle different response formats from backend
+        let userName = ''
+        let userToStore = null
+        
+        if (data.data.user.operadorActual) {
+          // New backend format with biblioteca and operador
+          userName = data.data.user.operadorActual.nombre || 'Usuario'
+          userToStore = {
+            id: data.data.user.operadorActual.id || data.data.user.operadorActual._id,
+            nombre: data.data.user.operadorActual.nombre,
+            email: data.data.user.biblioteca?.email || '',
+            bibliotecaId: data.data.user.biblioteca?._id || data.data.user.biblioteca?.id,
+            role: data.data.user.operadorActual.rol || 'USER'
+          }
+        } else {
+          // Fallback for direct user format
+          userName = data.data.user.nombre || 'Usuario'
+          userToStore = {
+            id: data.data.user.id || data.data.user._id,
+            nombre: data.data.user.nombre,
+            email: data.data.user.email,
+            bibliotecaId: data.data.user.bibliotecaId,
+            role: data.data.user.role || 'USER'
+          }
+        }
+        
+        successMessage.value = `¡Bienvenido, ${userName}!`
 
         // Set user in auth store
-        authStore.user = data.data.user
+        authStore.user = userToStore
 
         // Start loading steps animation
         startLoadingSequence()

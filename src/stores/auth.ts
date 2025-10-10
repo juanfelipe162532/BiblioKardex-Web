@@ -10,23 +10,55 @@ export interface User {
   role?: string
 }
 
+export interface Biblioteca {
+  _id: string
+  id?: string
+  nombre: string
+  email: string
+  direccion?: string
+  telefono?: string
+  configuracion?: {
+    maxPrestamos: number
+    diasPrestamo: number
+    permitirRenovaciones?: boolean
+    maxRenovaciones?: number
+  }
+}
+
+export interface SessionData {
+  biblioteca: Biblioteca
+  operadorActual: User
+  sessionId: string
+  config: {
+    maxPrestamos: number
+    diasPrestamo: number
+  }
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
+  const session = ref<SessionData | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  const isAuthenticated = computed(() => !!user.value)
-  const hasLibrary = computed(() => !!user.value?.bibliotecaId)
+  const isAuthenticated = computed(() => !!user.value && !!session.value)
+  const hasLibrary = computed(() => !!session.value?.biblioteca)
+  const biblioteca = computed(() => session.value?.biblioteca || null)
+  const config = computed(() => session.value?.config || null)
 
   // Inicializar desde localStorage si existe
   const initializeAuth = () => {
     const storedUser = localStorage.getItem('auth_user')
-    if (storedUser) {
+    const storedSession = localStorage.getItem('auth_session')
+    
+    if (storedUser && storedSession) {
       try {
         user.value = JSON.parse(storedUser)
+        session.value = JSON.parse(storedSession)
       } catch (err) {
-        console.error('Error parsing stored user:', err)
+        console.error('Error parsing stored auth data:', err)
         localStorage.removeItem('auth_user')
+        localStorage.removeItem('auth_session')
       }
     }
   }
@@ -64,9 +96,15 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (err) {
       console.error('Logout error:', err)
     } finally {
+      // Clear all session data
       user.value = null
+      session.value = null
       error.value = null
+      
+      // Remove from localStorage
       localStorage.removeItem('auth_user')
+      localStorage.removeItem('auth_session')
+      
       loading.value = false
       
       // Redirect to login page
@@ -87,6 +125,22 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  const setSession = (sessionData: SessionData) => {
+    session.value = sessionData
+    user.value = sessionData.operadorActual
+    
+    // Save to localStorage
+    localStorage.setItem('auth_user', JSON.stringify(sessionData.operadorActual))
+    localStorage.setItem('auth_session', JSON.stringify(sessionData))
+  }
+
+  const clearSession = () => {
+    user.value = null
+    session.value = null
+    localStorage.removeItem('auth_user')
+    localStorage.removeItem('auth_session')
+  }
+
   // Verificar si el token sigue siendo válido
   const verifyToken = async (): Promise<boolean> => {
     try {
@@ -98,7 +152,7 @@ export const useAuthStore = defineStore('auth', () => {
       return false
     } catch (err) {
       console.error('Token verification failed:', err)
-      await signOut()
+      clearSession()
       return false
     }
   }
@@ -108,6 +162,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     user,
+    session,
+    biblioteca,
+    config,
     loading,
     error,
     isAuthenticated,
@@ -116,6 +173,8 @@ export const useAuthStore = defineStore('auth', () => {
     signOut,
     clearError,
     updateUser,
+    setSession,
+    clearSession,
     verifyToken,
     initializeAuth
   }

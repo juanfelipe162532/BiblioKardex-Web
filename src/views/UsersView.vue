@@ -7,16 +7,7 @@
           <h1 class="page-title">Gestión de Usuarios</h1>
           <p class="page-subtitle">Administra los usuarios frecuentes de tu biblioteca</p>
         </div>
-        <v-btn
-          color="primary"
-          variant="elevated"
-          size="large"
-          class="add-btn"
-          @click="showAddDialog = true"
-        >
-          <v-icon start>mdi-plus</v-icon>
-          Nuevo Usuario
-        </v-btn>
+        <!-- Botón de nuevo usuario ocultado -->
       </div>
     </div>
 
@@ -184,18 +175,9 @@
         </div>
         <h3 class="empty-title">No se encontraron usuarios</h3>
         <p class="empty-subtitle">
-          {{ search ? 'Intenta con otros términos de búsqueda' : 'Agrega tu primer usuario recurrente' }}
+          {{ search ? 'Intenta con otros términos de búsqueda' : 'Cuando registres lectores aparecerán aquí' }}
         </p>
-        <v-btn
-          v-if="!search"
-          color="primary"
-          variant="elevated"
-          class="empty-action"
-          @click="showAddDialog = true"
-        >
-          <v-icon start>mdi-plus</v-icon>
-          Agregar Usuario
-        </v-btn>
+        <!-- Acción para agregar usuario oculta -->
       </div>
     </div>
 
@@ -360,15 +342,15 @@ const users = computed(() => {
     'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)'
   ]
   
-  return readersStore.readers.map((reader: Reader, index: number): User => ({
+  return readersStore.readers.map((reader: any, index: number): User => ({
     id: reader.id,
-    name: reader.nombre,
+    name: reader.nombreCompleto || reader.nombre || 'Sin nombre',
     email: reader.email || 'Sin email',
-    phone: reader.telefono,
+    phone: reader.celular || reader.telefono,
     type: reader.tipo || 'Lector',
     color: gradients[index % gradients.length],
-    loansCount: 0,
-    activeLoans: 0,
+    loansCount: reader.totalPrestamos || 0,
+    activeLoans: reader.prestamosActivos || 0,
     lastLoan: formatRelativeTime(reader.fechaCreacion)
   }))
 })
@@ -416,8 +398,8 @@ const getTypeColor = (type: string): string => {
 }
 
 const getReaderCedula = (userId: string): string => {
-  const reader = readersStore.readers.find(r => r.id === userId)
-  return reader?.identificacion || 'N/A'
+  const reader: any = readersStore.readers.find((r: any) => r.id === userId)
+  return reader?.cedula || reader?.identificacion || 'N/A'
 }
 
 const formatRelativeTime = (dateString?: string): string => {

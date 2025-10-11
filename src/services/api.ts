@@ -149,7 +149,20 @@ class ApiService {
       limit: limit.toString(),
       ...(search && { search })
     })
-    return this.request<PaginatedResponse<Book>>(`/api/books?${params}`)
+    const raw = await this.request<any>(`/api/books?${params}`)
+    const success = raw?.status === 'success' || !!raw?.success
+    const payload = raw?.data || raw
+    const items: Book[] = payload?.items || payload?.data || []
+    const total: number = payload?.total ?? (Array.isArray(items) ? items.length : 0)
+    const pageNum: number = payload?.page ?? page
+    const limitNum: number = payload?.limit ?? limit
+    const totalPages = Math.max(1, Math.ceil((total || 0) / (limitNum || 1)))
+    return {
+      success: !!success,
+      data: items,
+      pagination: { page: pageNum, limit: limitNum, total: total || items.length, totalPages },
+      message: raw?.message || undefined
+    }
   }
 
   async createBook(bookData: CreateBookRequest): Promise<ApiResponse<Book>> {
@@ -184,7 +197,20 @@ class ApiService {
       limit: limit.toString(),
       ...(status && { status })
     })
-    return this.request<PaginatedResponse<Loan>>(`/api/loans?${params}`)
+    const raw = await this.request<any>(`/api/loans?${params}`)
+    const success = raw?.status === 'success' || !!raw?.success
+    const payload = raw?.data || raw
+    const items: Loan[] = payload?.items || payload?.data || []
+    const total: number = payload?.total ?? (Array.isArray(items) ? items.length : 0)
+    const pageNum: number = payload?.page ?? page
+    const limitNum: number = payload?.limit ?? limit
+    const totalPages = Math.max(1, Math.ceil((total || 0) / (limitNum || 1)))
+    return {
+      success: !!success,
+      data: items,
+      pagination: { page: pageNum, limit: limitNum, total: total || items.length, totalPages },
+      message: raw?.message || undefined
+    }
   }
 
   async createLoan(loanData: CreateLoanRequest): Promise<ApiResponse<Loan>> {
@@ -227,7 +253,20 @@ class ApiService {
       limit: limit.toString(),
       ...(search && { search })
     })
-    return this.request<PaginatedResponse<Reader>>(`/api/borrowers?${params}`)
+    const raw = await this.request<any>(`/api/borrowers?${params}`)
+    const success = raw?.status === 'success' || !!raw?.success
+    const payload = raw?.data || raw
+    const items: Reader[] = payload?.items || payload?.data || []
+    const total: number = payload?.total ?? (Array.isArray(items) ? items.length : 0)
+    const pageNum: number = payload?.page ?? page
+    const limitNum: number = payload?.limit ?? limit
+    const totalPages = Math.max(1, Math.ceil((total || 0) / (limitNum || 1)))
+    return {
+      success: !!success,
+      data: items,
+      pagination: { page: pageNum, limit: limitNum, total: total || items.length, totalPages },
+      message: raw?.message || undefined
+    }
   }
 
   async createReader(readerData: CreateReaderRequest): Promise<ApiResponse<Reader>> {
@@ -352,6 +391,14 @@ class ApiService {
   async getHealthCheck(): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/api/analysis/health')
   }
+
+  // Suscripción / Billing
+  async getSubscription(bibliotecaId: string): Promise<ApiResponse<SubscriptionInfo>> {
+    const raw = await this.request<any>(`/api/billing/subscription?bibliotecaId=${encodeURIComponent(bibliotecaId)}`)
+    const success = raw?.status === 'success' || !!raw?.success
+    const data = (raw?.data ?? raw) as SubscriptionInfo
+    return { success: !!success, data }
+  }
 }
 
 // Instancia singleton
@@ -409,6 +456,18 @@ export interface Library {
   descripcion?: string
   fechaCreacion: string
   activa: boolean
+}
+
+export interface SubscriptionInfo {
+  id?: string
+  bibliotecaId: string
+  planKey: 'FREE' | 'PRO' | string
+  status: 'TRIALING' | 'ACTIVE' | 'LOCKED' | string
+  trialStart?: string
+  trialEnd?: string
+  mode?: 'trial' | 'monthly' | 'none'
+  resetAt?: string
+  limits?: Record<string, number>
 }
 
 export interface AnalysisResult {

@@ -12,8 +12,8 @@
             />
           </div>
           <div class="greeting">
-            <h1 class="display-title">Hola, {{ userName }}</h1>
-            <p class="subtitle">Aquí tienes un resumen de tu biblioteca</p>
+            <h1 class="display-title">{{ libraryName }}</h1>
+            <p class="subtitle">Resumen general</p>
           </div>
         </div>
       </div>
@@ -133,20 +133,20 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useDashboardStore, useAuthStore } from '@/stores'
-import { Chart, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, ArcElement } from 'chart.js'
+import { apiService, type Loan, type Book } from '@/services'
+import { Chart, registerables } from 'chart.js'
 
-Chart.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, ArcElement)
+Chart.register(...registerables)
 
 const authStore = useAuthStore()
 const dashboard = useDashboardStore()
 
 const loansChart = ref<HTMLCanvasElement>()
 const categoriesChart = ref<HTMLCanvasElement>()
+let loansChartInstance: Chart | null = null
+let categoriesChartInstance: Chart | null = null
 
-const userName = computed(() => {
-  const name = authStore.user?.nombre || 'Usuario'
-  return name.split(' ')[0]
-})
+const libraryName = computed(() => authStore.biblioteca?.nombre || 'Biblioteca')
 
 
 
@@ -206,18 +206,80 @@ const aiFeatures = [
 ]
 
 
+// Data for charts
+const monthLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+const loansMonthlyLabels = ref<string[]>([])
+const loansMonthlyValues = ref<number[]>([])
+const categoryLabels = ref<string[]>([])
+const categoryValues = ref<number[]>([])
+
+const loadChartsData = async () => {
+  const bibliotecaId = authStore.user?.bibliotecaId
+  if (!bibliotecaId) return
+
+  // Fetch loans (up to 1000 most recent)
+  try {
+    const loansResp = await apiService.getLoans(bibliotecaId, 1, 1000)
+    const loans = (loansResp.data || []) as Loan[]
+    const now = new Date()
+    // Build last 6 months window
+    const months: { key: string; label: string }[] = []
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      months.push({ key, label: monthLabels[d.getMonth()] })
+    }
+    const counts = new Map(months.map(m => [m.key, 0]))
+    loans.forEach(l => {
+      const d = new Date(l.fechaPrestamo || l['createdAt'] || l['fechaCreacion'])
+      if (!isNaN(d.getTime())) {
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        if (counts.has(key)) counts.set(key, (counts.get(key) || 0) + 1)
+      }
+    })
+    loansMonthlyLabels.value = months.map(m => m.label)
+    loansMonthlyValues.value = months.map(m => counts.get(m.key) || 0)
+  } catch (e) {
+    console.warn('No se pudieron cargar préstamos para el gráfico:', e)
+    loansMonthlyLabels.value = monthLabels.slice(0, 6)
+    loansMonthlyValues.value = [0, 0, 0, 0, 0, 0]
+  }
+
+  // Fetch books to compute category distribution (top 5)
+  try {
+    const booksResp = await apiService.getBooks(bibliotecaId, 1, 1000)
+    const books = (booksResp.data || []) as Book[]
+    const map = new Map<string, number>()
+    books.forEach(b => {
+      const cat = (b.categoria || 'Sin categoría').trim()
+      map.set(cat, (map.get(cat) || 0) + 1)
+    })
+    const sorted = Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5)
+    categoryLabels.value = sorted.map(([k]) => k)
+    categoryValues.value = sorted.map(([, v]) => v)
+  } catch (e) {
+    console.warn('No se pudieron cargar libros para categorías:', e)
+    categoryLabels.value = []
+    categoryValues.value = []
+  }
+}
+
 const createCharts = async () => {
   await nextTick()
   
   // Loans Chart
   if (loansChart.value) {
-    new Chart(loansChart.value, {
+    // Destroy previous instance if any
+    if (loansChartInstance) {
+      loansChartInstance.destroy()
+    }
+    loansChartInstance = new Chart(loansChart.value, {
       type: 'bar',
       data: {
-        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+        labels: loansMonthlyLabels.value,
         datasets: [{
           label: 'Préstamos',
-          data: [12, 19, 8, 15, 25, 18],
+          data: loansMonthlyValues.value,
           backgroundColor: 'rgba(99, 102, 241, 0.8)',
           borderColor: 'rgba(99, 102, 241, 1)',
           borderWidth: 2,
@@ -256,12 +318,15 @@ const createCharts = async () => {
 
   // Categories Chart
   if (categoriesChart.value) {
-    new Chart(categoriesChart.value, {
+    if (categoriesChartInstance) {
+      categoriesChartInstance.destroy()
+    }
+    categoriesChartInstance = new Chart(categoriesChart.value, {
       type: 'doughnut',
       data: {
-        labels: ['Ficción', 'Ciencia', 'Historia', 'Arte', 'Biografía'],
+        labels: categoryLabels.value.length ? categoryLabels.value : ['Sin datos'],
         datasets: [{
-          data: [30, 25, 20, 15, 10],
+          data: categoryValues.value.length ? categoryValues.value : [1],
           backgroundColor: [
             '#6366F1',
             '#8B5CF6',
@@ -305,12 +370,16 @@ onMounted(async () => {
   if (id) {
     dashboard.loadStatistics(id)
   }
+  await loadChartsData()
   await createCharts()
 })
 
 // Recargar si cambia la biblioteca del usuario
 watch(() => authStore.user?.bibliotecaId, (newId) => {
-  if (newId) dashboard.loadStatistics(newId)
+  if (newId) {
+    dashboard.loadStatistics(newId)
+    loadChartsData().then(createCharts)
+  }
 })
 </script>
 

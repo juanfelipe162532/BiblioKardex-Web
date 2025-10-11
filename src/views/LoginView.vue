@@ -303,36 +303,27 @@ const startPolling = () => {
         loadingAuth.value = true
         loadingStep.value = 0
         
-        // Handle different response formats from backend
+        // Handle response formats from backend
+        // Prefer new backend format that returns full session data
         let userName = ''
-        let userToStore = null
-        
-        if (data.data.user.operadorActual) {
-          // New backend format with biblioteca and operador
-          userName = data.data.user.operadorActual.nombre || 'Usuario'
-          userToStore = {
-            id: data.data.user.operadorActual.id || data.data.user.operadorActual._id,
-            nombre: data.data.user.operadorActual.nombre,
-            email: data.data.user.biblioteca?.email || '',
-            bibliotecaId: data.data.user.biblioteca?._id || data.data.user.biblioteca?.id,
-            role: data.data.user.operadorActual.rol || 'USER'
-          }
+        const payload = data.data.user
+        if (payload.operadorActual && payload.biblioteca) {
+          // New backend format: store full session for proper auth state
+          userName = payload.operadorActual?.nombre || 'Usuario'
+          authStore.setSession(payload)
         } else {
-          // Fallback for direct user format
-          userName = data.data.user.nombre || 'Usuario'
-          userToStore = {
-            id: data.data.user.id || data.data.user._id,
-            nombre: data.data.user.nombre,
-            email: data.data.user.email,
-            bibliotecaId: data.data.user.bibliotecaId,
-            role: data.data.user.role || 'USER'
+          // Fallback for legacy format: set minimal user info
+          userName = payload.nombre || 'Usuario'
+          authStore.user = {
+            id: payload.id || payload._id,
+            nombre: payload.nombre,
+            email: payload.email || payload.biblioteca?.email || '',
+            bibliotecaId: payload.bibliotecaId || payload.biblioteca?._id || payload.biblioteca?.id,
+            role: payload.role || 'USER'
           }
         }
-        
-        successMessage.value = `¡Bienvenido, ${userName}!`
 
-        // Set user in auth store
-        authStore.user = userToStore
+        successMessage.value = `¡Bienvenido, ${userName}!`
 
         // Start loading steps animation
         startLoadingSequence()

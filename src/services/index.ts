@@ -25,5 +25,7 @@ export type {
   PaginatedResponse
 } from './api'
 
+export type { SubscriptionInfo } from './api'
+
 export type { Library } from './libraries.service'
 export type { AnalysisResult, AnalysisStatus } from './analysis.service'

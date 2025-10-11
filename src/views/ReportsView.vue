@@ -8,15 +8,9 @@
           <p class="page-subtitle">Analiza el rendimiento y tendencias de tu biblioteca</p>
         </div>
         <div class="header-actions">
-          <v-btn
-            color="primary"
-            variant="elevated"
-            size="large"
-            disabled
-            title="Funcionalidad en desarrollo"
-          >
-            <v-icon start>mdi-download</v-icon>
-            Exportar Reportes
+          <v-btn color="primary" variant="elevated" size="large" class="generate-btn" @click="showExportDialog = true">
+            <v-icon start>mdi-file-chart</v-icon>
+            Generar Informes
           </v-btn>
         </div>
       </div>
@@ -28,13 +22,13 @@
         <h2 class="section-title">Métricas Principales</h2>
         <p class="section-subtitle">Indicadores clave de rendimiento</p>
       </div>
-      
+
       <!-- Loading State -->
       <div v-if="loading" class="loading-container">
         <v-progress-circular indeterminate color="primary" size="40"></v-progress-circular>
         <p class="loading-text">Cargando métricas...</p>
       </div>
-      
+
       <!-- Error State -->
       <div v-else-if="error" class="error-state">
         <v-alert type="error" variant="tonal" class="error-alert">
@@ -53,14 +47,10 @@
           </template>
         </v-alert>
       </div>
-      
+
       <!-- Metrics Grid -->
       <div v-else class="metrics-grid">
-        <div
-          v-for="(metric, index) in metrics"
-          :key="index"
-          class="metric-card"
-        >
+        <div v-for="(metric, index) in metrics" :key="index" class="metric-card">
           <div class="metric-icon" :style="`background: ${metric.color}20`">
             <v-icon :color="metric.color" size="24">{{ metric.icon }}</v-icon>
           </div>
@@ -68,16 +58,10 @@
             <h3 class="metric-value">{{ metric.value }}</h3>
             <p class="metric-label">{{ metric.label }}</p>
             <div class="metric-trend">
-              <v-icon 
-                :color="metric.trend === 'up' ? 'success' : 'error'" 
-                size="16"
-              >
+              <v-icon :color="metric.trend === 'up' ? 'success' : 'error'" size="16">
                 {{ metric.trend === 'up' ? 'mdi-trending-up' : 'mdi-trending-down' }}
               </v-icon>
-              <span 
-                class="trend-text"
-                :class="metric.trend === 'up' ? 'trend-up' : 'trend-down'"
-              >
+              <span class="trend-text" :class="metric.trend === 'up' ? 'trend-up' : 'trend-down'">
                 {{ metric.change }}
               </span>
             </div>
@@ -92,19 +76,14 @@
         <h2 class="section-title">Análisis Visual</h2>
         <p class="section-subtitle">Tendencias y distribuciones</p>
       </div>
-      
+
       <div class="charts-row">
         <!-- Loans Trend Chart -->
         <div class="chart-card large-chart">
           <div class="chart-header">
             <h3 class="chart-title">Tendencia de Préstamos</h3>
             <div class="chart-controls">
-              <v-btn-toggle
-                v-model="chartPeriod"
-                variant="outlined"
-                density="compact"
-                mandatory
-              >
+              <v-btn-toggle v-model="chartPeriod" variant="outlined" density="compact" mandatory>
                 <v-btn size="small">6M</v-btn>
                 <v-btn size="small">1A</v-btn>
                 <v-btn size="small">Todo</v-btn>
@@ -156,7 +135,7 @@
         <h2 class="section-title">Datos Detallados</h2>
         <p class="section-subtitle">Información específica y rankings</p>
       </div>
-      
+
       <div class="tables-row">
         <!-- Recent Loans -->
         <div class="data-card">
@@ -168,16 +147,9 @@
             </v-btn>
           </div>
           <div class="data-content">
-            <div
-              v-for="(loan, index) in recentLoans"
-              :key="index"
-              class="data-item"
-            >
+            <div v-for="(loan, index) in recentLoans" :key="index" class="data-item">
               <div class="item-avatar">
-                <div 
-                  class="status-indicator"
-                  :class="loan.status === 'active' ? 'status-active' : 'status-returned'"
-                >
+                <div class="status-indicator" :class="loan.status === 'active' ? 'status-active' : 'status-returned'">
                   <v-icon size="14" color="white">
                     {{ loan.status === 'active' ? 'mdi-clock' : 'mdi-check' }}
                   </v-icon>
@@ -188,11 +160,7 @@
                 <p class="item-subtitle">{{ loan.user }} • {{ loan.date }}</p>
               </div>
               <div class="item-status">
-                <v-chip
-                  :color="loan.status === 'active' ? 'orange' : 'green'"
-                  variant="tonal"
-                  size="small"
-                >
+                <v-chip :color="loan.status === 'active' ? 'orange' : 'green'" variant="tonal" size="small">
                   {{ loan.status === 'active' ? 'Activo' : 'Devuelto' }}
                 </v-chip>
               </div>
@@ -210,11 +178,7 @@
             </v-btn>
           </div>
           <div class="data-content">
-            <div
-              v-for="(book, index) in topBooks"
-              :key="index"
-              class="data-item"
-            >
+            <div v-for="(book, index) in topBooks" :key="index" class="data-item">
               <div class="item-rank">
                 <span class="rank-number">{{ index + 1 }}</span>
               </div>
@@ -233,72 +197,46 @@
     </div>
 
     <!-- Export Dialog -->
-    <v-dialog v-model="showExportDialog" max-width="600" persistent>
+    <v-dialog v-model="showExportDialog" max-width="560" persistent>
       <v-card class="dialog-card">
         <v-card-title class="dialog-header">
           <div class="dialog-icon">
-            <v-icon color="primary">mdi-download</v-icon>
+            <v-icon color="primary">mdi-file-chart</v-icon>
           </div>
           <div class="dialog-text">
-            <h2 class="dialog-title">Exportar Reportes</h2>
-            <p class="dialog-subtitle">Genera reportes personalizados</p>
+            <h2 class="dialog-title">Generar Informes</h2>
+            <p class="dialog-subtitle">Elige el tipo de reporte</p>
           </div>
         </v-card-title>
 
         <v-card-text class="dialog-content">
-          <div class="form-row">
-            <v-select
-              v-model="exportType"
-              :items="exportTypes"
-              label="Tipo de reporte"
-              variant="outlined"
-              required
-            />
+          <div class="mb-4 format-selector">
+            <span class="mr-3" style="font-weight:600; color:#334155;">Formato:</span>
+            <v-btn-toggle v-model="exportFormat" density="comfortable" rounded mandatory>
+              <v-btn value="excel" size="small"><v-icon start size="14">mdi-file-excel</v-icon>Excel</v-btn>
+              <v-btn value="pdf" size="small"><v-icon start size="14">mdi-file-pdf-box</v-icon>PDF</v-btn>
+            </v-btn-toggle>
           </div>
-          <div class="form-row">
-            <v-select
-              v-model="exportFormat"
-              :items="exportFormats"
-              label="Formato de archivo"
-              variant="outlined"
-              required
-            />
-          </div>
-          <div class="form-row-group">
-            <div class="form-row">
-              <v-text-field
-                v-model="dateFrom"
-                label="Fecha desde"
-                type="date"
-                variant="outlined"
-              />
-            </div>
-            <div class="form-row">
-              <v-text-field
-                v-model="dateTo"
-                label="Fecha hasta"
-                type="date"
-                variant="outlined"
-              />
-            </div>
+          <div class="report-options">
+            <v-btn block color="primary" variant="elevated" class="mb-3" @click="generateInventoryReport">
+              <v-icon start>mdi-clipboard-list</v-icon>
+              Reporte de Inventario
+            </v-btn>
+            <v-btn block color="primary" variant="tonal" class="mb-3" @click="generateLoansReport">
+              <v-icon start>mdi-book-clock</v-icon>
+              Reporte de Préstamos
+            </v-btn>
+            <v-btn block color="primary" variant="tonal" @click="generateReturnsReport">
+              <v-icon start>mdi-keyboard-return</v-icon>
+              Reporte de Devoluciones
+            </v-btn>
           </div>
         </v-card-text>
 
         <v-card-actions class="dialog-actions">
-          <v-btn
-            variant="text"
-            color="grey-darken-1"
-            @click="showExportDialog = false"
-          >
-            Cancelar
-          </v-btn>
-          <v-btn
-            color="primary"
-            variant="elevated"
-            @click="exportReport"
-          >
-            <v-icon start>mdi-download</v-icon>
-            Exportar
+          <v-spacer />
+          <v-btn variant="text" color="grey-darken-1" @click="showExportDialog = false">
+            Cerrar
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -307,15 +245,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
-import { Chart, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, ArcElement } from 'chart.js'
+import { ref, onMounted, nextTick, watch } from 'vue'
+import { Chart, registerables } from 'chart.js'
+import { useAuthStore } from '@/stores'
+import { apiService, type Loan, type Book } from '@/services'
+import logoUrl from '@/assets/logo.png'
 
-Chart.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, ArcElement)
+Chart.register(...registerables)
 
 const showExportDialog = ref(false)
-const chartPeriod = ref(0)
-const exportType = ref('Préstamos')
-const exportFormat = ref('PDF')
+const chartPeriod = ref(0) // 0: 6M, 1: 1A, 2: Todo
+// Export dialog state
+const exportType = ref('')
+const exportFormat = ref<'excel' | 'pdf'>('excel')
 const dateFrom = ref('')
 const dateTo = ref('')
 
@@ -323,122 +265,172 @@ const loansChart = ref<HTMLCanvasElement>()
 const categoriesChart = ref<HTMLCanvasElement>()
 const usersChart = ref<HTMLCanvasElement>()
 const monthlyChart = ref<HTMLCanvasElement>()
+let loansChartInstance: Chart | null = null
+let categoriesChartInstance: Chart | null = null
+let usersChartInstance: Chart | null = null
+let monthlyChartInstance: Chart | null = null
 
 // UI state
 const loading = ref(true)
 const error = ref<string | null>(null)
 
-const metrics = [
-  {
-    label: 'Total Préstamos',
-    value: '1,248',
-    icon: 'mdi-book-multiple',
-    color: '#6366F1',
-    trend: 'up',
-    change: '+12% vs mes anterior'
-  },
-  {
-    label: 'Préstamos Activos',
-    value: '187',
-    icon: 'mdi-clock-outline',
-    color: '#F59E0B',
-    trend: 'up',
-    change: '+5% vs mes anterior'
-  },
-  {
-    label: 'Devoluciones',
-    value: '1,061',
-    icon: 'mdi-keyboard-return',
-    color: '#10B981',
-    trend: 'up',
-    change: '+8% vs mes anterior'
-  },
-  {
-    label: 'Usuarios Activos',
-    value: '342',
-    icon: 'mdi-account-group',
-    color: '#8B5CF6',
-    trend: 'down',
-    change: '-2% vs mes anterior'
-  }
-]
+const authStore = useAuthStore()
 
-const recentLoans = [
-  {
-    book: 'Cien años de soledad',
-    user: 'María García Pérez',
-    date: 'Hace 2 horas',
-    status: 'active'
-  },
-  {
-    book: 'Don Quijote de La Mancha',
-    user: 'Carlos López Silva',
-    date: 'Hace 3 horas',
-    status: 'returned'
-  },
-  {
-    book: '1984',
-    user: 'Ana Martínez Rodriguez',
-    date: 'Hace 1 día',
-    status: 'active'
-  },
-  {
-    book: 'Rayuela',
-    user: 'Pedro Sánchez Torres',
-    date: 'Hace 2 días',
-    status: 'returned'
-  },
-  {
-    book: 'El Principito',
-    user: 'Lucía Fernández',
-    date: 'Hace 3 días',
-    status: 'active'
-  }
-]
+// Data caches
+const allLoans = ref<Loan[]>([])
+const allBooks = ref<Book[]>([])
 
-const topBooks = [
-  {
-    title: 'Cien años de soledad',
-    author: 'Gabriel García Márquez',
-    loans: 24
-  },
-  {
-    title: 'Don Quijote de La Mancha',
-    author: 'Miguel de Cervantes',
-    loans: 18
-  },
-  {
-    title: '1984',
-    author: 'George Orwell',
-    loans: 16
-  },
-  {
-    title: 'Rayuela',
-    author: 'Julio Cortázar',
-    loans: 14
-  },
-  {
-    title: 'El Principito',
-    author: 'Antoine de Saint-Exupéry',
-    loans: 12
-  }
-]
+// Aggregated datasets
+const monthLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+const loansTrendLabels = ref<string[]>([])
+const loansTrendValues = ref<number[]>([])
+const categoriesLabels = ref<string[]>([])
+const categoriesValues = ref<number[]>([])
+const usersActivityLabels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+const usersActivityValues = ref<number[]>([0, 0, 0, 0, 0, 0, 0])
+const monthlyStatsLabels = ['Nuevos', 'Devueltos', 'Vencidos', 'Renovados']
+const monthlyStatsValues = ref<number[]>([0, 0, 0, 0])
 
-const exportTypes = ['Préstamos', 'Usuarios', 'Inventario', 'Estadísticas Generales']
-const exportFormats = ['PDF', 'Excel', 'CSV']
+const numberFmt = new Intl.NumberFormat('es-CO')
+const metrics = ref<Array<{ label: string; value: string; icon: string; color: string; trend: 'up' | 'down'; change: string }>>([
+  { label: 'Total Préstamos', value: '-', icon: 'mdi-book-multiple', color: '#6366F1', trend: 'up', change: '' },
+  { label: 'Préstamos Activos', value: '-', icon: 'mdi-clock-outline', color: '#F59E0B', trend: 'up', change: '' },
+  { label: 'Devoluciones (30 días)', value: '-', icon: 'mdi-keyboard-return', color: '#10B981', trend: 'up', change: '' },
+  { label: 'Atrasados', value: '-', icon: 'mdi-alert-circle-outline', color: '#EF4444', trend: 'up', change: '' }
+])
+
+const recentLoans = ref<Array<{ book: string; user: string; date: string; status: 'active' | 'returned' }>>([])
+const topBooks = ref<Array<{ title: string; author: string; loans: number }>>([])
+
+const exportTypes: string[] = []
+const exportFormats: string[] = []
+
+function formatRelativeTime(dateString?: string): string {
+  if (!dateString) return 'Fecha desconocida'
+  const date = new Date(dateString)
+  if (isNaN(date.getTime())) return 'Fecha inválida'
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const minutes = Math.floor(diffMs / 60000)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+  if (days > 7) return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
+  if (days >= 1) return days === 1 ? 'Ayer' : `Hace ${days} días`
+  if (hours >= 1) return `Hace ${hours} horas`
+  return `Hace ${minutes} minutos`
+}
+
+const computeAggregations = () => {
+  // Loans trend by month
+  const map = new Map<string, number>() // key: YYYY-MM
+  allLoans.value.forEach(l => {
+    const d = new Date(l.fechaPrestamo || (l as any).createdAt)
+    if (isNaN(d.getTime())) return
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    map.set(key, (map.get(key) || 0) + 1)
+  })
+  const keys = Array.from(map.keys()).sort()
+  const labelsAll = keys.map(k => {
+    const [y, m] = k.split('-').map(Number)
+    return monthLabels[(m - 1) % 12]
+  })
+  const valuesAll = keys.map(k => map.get(k) || 0)
+  const slice = chartPeriod.value === 0 ? 6 : chartPeriod.value === 1 ? 12 : keys.length
+  const start = Math.max(0, keys.length - slice)
+  loansTrendLabels.value = labelsAll.slice(start)
+  loansTrendValues.value = valuesAll.slice(start)
+
+  // Categories distribution from books (Top 6)
+  const catMap = new Map<string, number>()
+  allBooks.value.forEach(b => {
+    const c = (b.categoria || 'Sin categoría').trim()
+    catMap.set(c, (catMap.get(c) || 0) + 1)
+  })
+  const topCats = Array.from(catMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 6)
+  categoriesLabels.value = topCats.map(([k]) => k)
+  categoriesValues.value = topCats.map(([, v]) => v)
+
+  // Users activity by weekday (last 30 days)
+  const now = new Date()
+  const daysAgo30 = new Date(now.getTime() - 30 * 86400000)
+  const weekMap = new Array(7).fill(0) as number[] // Mon..Sun mapping
+  allLoans.value.forEach(l => {
+    const d = new Date(l.fechaPrestamo || (l as any).createdAt)
+    if (isNaN(d.getTime()) || d < daysAgo30) return
+    const wd = d.getDay() === 0 ? 6 : d.getDay() - 1
+    weekMap[wd] = (weekMap[wd] || 0) + 1
+  })
+  usersActivityValues.value = weekMap
+
+  // Monthly stats current month
+  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const nuevos = allLoans.value.filter(l => {
+    const d = new Date(l.fechaPrestamo || (l as any).createdAt)
+    return !isNaN(d.getTime()) && d >= firstOfMonth
+  }).length
+  const devueltos = allLoans.value.filter(l => {
+    const fd = l.fechaDevolucion ? new Date(l.fechaDevolucion) : null
+    return !!fd && !isNaN(fd.getTime()) && fd >= firstOfMonth
+  }).length
+  const vencidos = allLoans.value.filter(l => (l.estado || '').toUpperCase() === 'ATRASADO').length
+  monthlyStatsValues.value = [nuevos, devueltos, vencidos, 0]
+
+  // Metrics
+  const total = allLoans.value.length
+  const activos = allLoans.value.filter(l => (l.estado || '').toUpperCase() === 'ACTIVO').length
+  const devueltos30 = allLoans.value.filter(l => {
+    const fd = l.fechaDevolucion ? new Date(l.fechaDevolucion) : null
+    return !!fd && !isNaN(fd.getTime()) && fd >= daysAgo30
+  }).length
+  const atrasados = vencidos
+  metrics.value = [
+    { label: 'Total Préstamos', value: numberFmt.format(total), icon: 'mdi-book-multiple', color: '#6366F1', trend: 'up', change: '' },
+    { label: 'Préstamos Activos', value: numberFmt.format(activos), icon: 'mdi-clock-outline', color: '#F59E0B', trend: 'up', change: '' },
+    { label: 'Devoluciones (30 días)', value: numberFmt.format(devueltos30), icon: 'mdi-keyboard-return', color: '#10B981', trend: 'up', change: '' },
+    { label: 'Atrasados', value: numberFmt.format(atrasados), icon: 'mdi-alert-circle-outline', color: '#EF4444', trend: 'up', change: '' }
+  ]
+
+  // Recent Loans (Top 5)
+  const bookMap = new Map<string, Book>()
+  allBooks.value.forEach(b => bookMap.set(b.id, b))
+  recentLoans.value = [...allLoans.value]
+    .sort((a, b) => new Date(b.fechaPrestamo || (b as any).createdAt).getTime() - new Date(a.fechaPrestamo || (a as any).createdAt).getTime())
+    .slice(0, 5)
+    .map(l => ({
+      book: bookMap.get(l.libroId as any)?.titulo || 'Libro',
+      user: (l as any).nombreLector || 'Lector',
+      date: formatRelativeTime(l.fechaPrestamo as any),
+      status: (l.estado || '').toUpperCase() === 'DEVUELTO' ? 'returned' : 'active'
+    }))
+
+  // Top Books by loans
+  const counts = new Map<string, number>()
+  allLoans.value.forEach(l => {
+    const id = String(l.libroId || '')
+    if (!id) return
+    counts.set(id, (counts.get(id) || 0) + 1)
+  })
+  const top = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5)
+  topBooks.value = top.map(([id, c]) => ({
+    title: bookMap.get(id)?.titulo || 'Libro',
+    author: bookMap.get(id)?.autor || 'Autor desconocido',
+    loans: c
+  }))
+}
 
 const createCharts = async () => {
   await nextTick()
-  
+
   // Loans Trend Chart
   if (loansChart.value) {
-    new Chart(loansChart.value, {
+    if (loansChartInstance) loansChartInstance.destroy()
+    loansChartInstance = new Chart(loansChart.value, {
       type: 'line',
       data: {
-        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+        labels: loansTrendLabels.value,
         datasets: [{
           label: 'Préstamos',
-          data: [65, 78, 82, 91, 105, 118, 142, 135, 128, 156, 178, 195],
+          data: loansTrendValues.value,
           borderColor: '#6366F1',
           backgroundColor: 'rgba(99, 102, 241, 0.1)',
           borderWidth: 3,
@@ -482,12 +474,13 @@ const createCharts = async () => {
 
   // Categories Pie Chart
   if (categoriesChart.value) {
-    new Chart(categoriesChart.value, {
+    if (categoriesChartInstance) categoriesChartInstance.destroy()
+    categoriesChartInstance = new Chart(categoriesChart.value, {
       type: 'doughnut',
       data: {
-        labels: ['Literatura', 'Ciencias', 'Historia', 'Arte', 'Biografías'],
+        labels: categoriesLabels.value.length ? categoriesLabels.value : ['Sin datos'],
         datasets: [{
-          data: [35, 22, 19, 12, 12],
+          data: categoriesValues.value.length ? categoriesValues.value : [1],
           backgroundColor: [
             '#6366F1',
             '#10B981',
@@ -527,13 +520,14 @@ const createCharts = async () => {
 
   // Users Activity Chart
   if (usersChart.value) {
-    new Chart(usersChart.value, {
+    if (usersChartInstance) usersChartInstance.destroy()
+    usersChartInstance = new Chart(usersChart.value, {
       type: 'bar',
       data: {
-        labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+        labels: usersActivityLabels,
         datasets: [{
           label: 'Actividad',
-          data: [42, 38, 45, 52, 48, 22, 15],
+          data: usersActivityValues.value,
           backgroundColor: '#10B981',
           borderRadius: 6,
           borderSkipped: false
@@ -570,13 +564,14 @@ const createCharts = async () => {
 
   // Monthly Statistics Chart
   if (monthlyChart.value) {
-    new Chart(monthlyChart.value, {
+    if (monthlyChartInstance) monthlyChartInstance.destroy()
+    monthlyChartInstance = new Chart(monthlyChart.value, {
       type: 'bar',
       data: {
-        labels: ['Nuevos', 'Devueltos', 'Vencidos', 'Renovados'],
+        labels: monthlyStatsLabels,
         datasets: [{
           label: 'Este mes',
-          data: [45, 112, 8, 23],
+          data: monthlyStatsValues.value,
           backgroundColor: [
             '#6366F1',
             '#10B981',
@@ -617,10 +612,264 @@ const createCharts = async () => {
   }
 }
 
-const exportReport = () => {
-  // TODO: Implement when backend supports reports export
-  console.log('Export functionality not available yet')
-  showExportDialog.value = false
+async function toDataUrl(url: string): Promise<string> {
+  const res = await fetch(url)
+  const blob = await res.blob()
+  return await new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result as string)
+    reader.readAsDataURL(blob)
+  })
+}
+
+function escapeHtml(text: any) {
+  const s = String(text ?? '')
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+function buildReportHtml(title: string, subtitle: string, columns: string[], rows: string[][]) {
+  const now = new Date()
+  const fechaStr = now.toLocaleString()
+  const nombreBib = authStore.biblioteca?.nombre || 'Biblioteca'
+  const header = `<div class="header">
+    <img src="${(window as any).__reportLogo || ''}" alt="BiblioKardex" width="48" height="48" />
+    <div>
+      <div class="title">${escapeHtml(title)}</div>
+      <div class="meta">${escapeHtml(subtitle)} — Biblioteca: ${escapeHtml(nombreBib)} — Fecha de emisión: ${escapeHtml(fechaStr)}</div>
+    </div>
+  </div>`
+  const thead = `<thead><tr>${columns.map(c => `<th>${escapeHtml(c)}</th>`).join('')}</tr></thead>`
+  const tbody = `<tbody>${rows.map(r => `<tr>${r.map(cell => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`).join('')}</tbody>`
+  return `<!DOCTYPE html>
+  <html><head><meta charset="UTF-8"/>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; }
+    .header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .title { font-size: 18px; font-weight: bold; }
+    .meta { margin-top: 4px; color: #444; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #999; padding: 8px; vertical-align: top; }
+    th { background: #e8eefc; }
+    td.num { text-align: center; }
+  </style>
+  </head><body>
+  ${header}
+  <table>
+    ${thead}
+    ${tbody}
+  </table>
+  </body></html>`
+}
+
+function downloadExcelFromHtml(html: string, filenameBase: string) {
+  const blob = new Blob([html], { type: 'application/vnd.ms-excel' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  const now = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const ts = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`
+  a.href = url
+  a.download = `${filenameBase}_${ts}.xls`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+function printPdfFromHtml(html: string) {
+  const win = window.open('', '_blank')
+  if (!win) return
+  win.document.open()
+  win.document.write(html)
+  win.document.close()
+  setTimeout(() => { try { win.focus(); win.print(); } catch { } }, 500)
+}
+
+async function ensureReportLogo() {
+  if ((window as any).__reportLogo) return (window as any).__reportLogo
+  const data = await toDataUrl(logoUrl as unknown as string)
+    ; (window as any).__reportLogo = data
+  return data
+}
+
+async function generateInventoryReport() {
+  try {
+    if (!authStore.user?.bibliotecaId) throw new Error('Biblioteca no definida')
+    // Asegurar datos de libros en memoria
+    if (!allBooks.value.length) {
+      const booksResp = await apiService.getBooks(authStore.user.bibliotecaId, 1, 2000)
+      allBooks.value = booksResp.data || []
+    }
+
+    // Agrupar por (titulo+autor+categoria) para estimar ejemplares
+    const groups = new Map<string, { titulo: string; autor: string; descripcion: string; categoria: string; total: number; disponibles: number }>()
+    for (const b of allBooks.value as any[]) {
+      const key = [b.titulo?.trim().toLowerCase(), b.autor?.trim().toLowerCase(), (b.categoria || '').trim().toLowerCase()].join('|')
+      const g = groups.get(key) || {
+        titulo: b.titulo || '',
+        autor: b.autor || '',
+        descripcion: b.descripcion || '',
+        categoria: b.categoria || '',
+        total: 0,
+        disponibles: 0,
+      }
+      g.total += 1
+      if (b.disponible) g.disponibles += 1
+      if (!g.descripcion && b.descripcion) g.descripcion = b.descripcion
+      groups.set(key, g)
+    }
+
+    const rows = Array.from(groups.values())
+
+    const now = new Date()
+    const fechaStr = now.toLocaleString()
+    const nombreBib = authStore.biblioteca?.nombre || 'Biblioteca'
+    const logoDataUrl = await toDataUrl(logoUrl as unknown as string)
+
+    const tableRows = rows.map(r => `
+      <tr>
+        <td>${escapeHtml(r.titulo)}</td>
+        <td>${escapeHtml(r.autor)}</td>
+        <td>${escapeHtml(r.descripcion)}</td>
+        <td>${escapeHtml(r.categoria || 'Sin categoría')}</td>
+        <td style="text-align:center;">${r.total}</td>
+        <td style="text-align:center;">${r.disponibles}</td>
+      </tr>
+    `).join('')
+
+    const html = `<!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8" />
+        <style>
+          body { font-family: Arial, Helvetica, sans-serif; }
+          .header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+          .title { font-size: 18px; font-weight: bold; }
+          .meta { margin-top: 4px; color: #444; }
+          table { border-collapse: collapse; width: 100%; }
+          th, td { border: 1px solid #999; padding: 8px; vertical-align: top; }
+          th { background: #e8eefc; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <img src="${logoDataUrl}" alt="BiblioKardex" width="48" height="48" />
+          <div>
+            <div class="title">REPORTE DE INVENTARIO</div>
+            <div class="meta">Biblioteca: ${escapeHtml(nombreBib)} — Fecha de emisión: ${escapeHtml(fechaStr)}</div>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Título</th>
+              <th>Autor</th>
+              <th>Descripción</th>
+              <th>Categoría</th>
+              <th>Ejemplares</th>
+              <th>Cantidad</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+      </body>
+      </html>`
+
+    if (exportFormat.value === 'excel') {
+      const blob = new Blob([html], { type: 'application/vnd.ms-excel' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      const pad = (n: number) => String(n).padStart(2, '0')
+      const ts = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`
+      a.href = url
+      a.download = `Inventario_${nombreBib.replace(/\s+/g, '_')}_${ts}.xls`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } else {
+      printPdfFromHtml(html)
+    }
+  } catch (e) {
+    console.error('No se pudo generar el reporte de Inventario:', e)
+  } finally {
+    showExportDialog.value = false
+  }
+}
+
+async function generateLoansReport() {
+  try {
+    if (!authStore.user?.bibliotecaId) throw new Error('Biblioteca no definida')
+    if (!allLoans.value.length) {
+      const loansResp = await apiService.getLoans(authStore.user.bibliotecaId, 1, 2000)
+      allLoans.value = loansResp.data || []
+    }
+    if (!allBooks.value.length) {
+      const booksResp = await apiService.getBooks(authStore.user.bibliotecaId, 1, 2000)
+      allBooks.value = booksResp.data || []
+    }
+    const bookMap = new Map<string, any>()
+    allBooks.value.forEach((b: any) => bookMap.set(String(b.id), b))
+    const rows = (allLoans.value as any[]).map(l => {
+      const b = bookMap.get(String(l.libroId))
+      const estado = (l.estado || '').toString().toUpperCase()
+      return [
+        l.fechaPrestamo ? new Date(l.fechaPrestamo).toLocaleString() : '',
+        b?.titulo || '—',
+        b?.autor || '—',
+        l.nombreLector || '—',
+        estado || '—',
+      ] as string[]
+    })
+    const columns = ['Fecha préstamo','Título','Autor','Lector','Estado']
+    const html = buildReportHtml('REPORTE DE PRÉSTAMOS', '', columns, rows)
+    if (exportFormat.value === 'excel') {
+      downloadExcelFromHtml(html, `Prestamos_${(authStore.biblioteca?.nombre || 'Biblioteca').replace(/\s+/g,'_')}`)
+    } else {
+      printPdfFromHtml(html)
+    }
+  } catch (e) {
+    console.error('No se pudo generar el reporte de Préstamos:', e)
+  } finally {
+    showExportDialog.value = false
+  }
+}
+
+async function generateReturnsReport() {
+  try {
+    if (!authStore.user?.bibliotecaId) throw new Error('Biblioteca no definida')
+    const resp = await apiService.getLoans(authStore.user.bibliotecaId, 1, 2000, 'DEVUELTO')
+    const loans = (resp.data || []) as any[]
+    if (!allBooks.value.length) {
+      const booksResp = await apiService.getBooks(authStore.user.bibliotecaId, 1, 2000)
+      allBooks.value = booksResp.data || []
+    }
+    const bookMap = new Map<string, any>()
+    allBooks.value.forEach((b: any) => bookMap.set(String(b.id), b))
+    const rows = loans.map(l => {
+      const b = bookMap.get(String(l.libroId))
+      return [
+        l.fechaPrestamo ? new Date(l.fechaPrestamo).toLocaleString() : '',
+        l.fechaDevolucion ? new Date(l.fechaDevolucion).toLocaleString() : '',
+        b?.titulo || '—',
+        b?.autor || '—',
+        l.nombreLector || '—',
+      ] as string[]
+    })
+    const columns = ['Fecha préstamo','Fecha devolución','Título','Autor','Lector']
+    const html = buildReportHtml('REPORTE DE DEVOLUCIONES', '', columns, rows)
+    if (exportFormat.value === 'excel') {
+      downloadExcelFromHtml(html, `Devoluciones_${(authStore.biblioteca?.nombre || 'Biblioteca').replace(/\s+/g,'_')}`)
+    } else {
+      printPdfFromHtml(html)
+    }
+  } catch (e) {
+    console.error('No se pudo generar el reporte de Devoluciones:', e)
+  } finally {
+    showExportDialog.value = false
+  }
 }
 
 onMounted(() => {
@@ -631,6 +880,17 @@ const loadData = async () => {
   try {
     loading.value = true
     error.value = null
+    const bibliotecaId = authStore.user?.bibliotecaId
+    if (!bibliotecaId) throw new Error('Biblioteca no definida')
+
+    const [loansResp, booksResp] = await Promise.all([
+      apiService.getLoans(bibliotecaId, 1, 2000),
+      apiService.getBooks(bibliotecaId, 1, 2000)
+    ])
+    allLoans.value = loansResp.data || []
+    allBooks.value = booksResp.data || []
+
+    computeAggregations()
     await createCharts()
   } catch (e) {
     console.error('Error loading reports:', e)
@@ -639,6 +899,15 @@ const loadData = async () => {
     loading.value = false
   }
 }
+
+watch(chartPeriod, async () => {
+  computeAggregations()
+  await createCharts()
+})
+
+watch(() => authStore.user?.bibliotecaId, (newId) => {
+  if (newId) loadData()
+})
 </script>
 
 <style scoped>
@@ -801,8 +1070,13 @@ const loadData = async () => {
   font-weight: 600;
 }
 
-.trend-up { color: #059669; }
-.trend-down { color: #DC2626; }
+.trend-up {
+  color: #059669;
+}
+
+.trend-down {
+  color: #DC2626;
+}
 
 /* Charts */
 .charts-row {
@@ -1046,11 +1320,11 @@ const loadData = async () => {
   .charts-row:first-child {
     grid-template-columns: 1fr;
   }
-  
+
   .charts-row:last-child {
     grid-template-columns: 1fr;
   }
-  
+
   .tables-row {
     grid-template-columns: 1fr;
   }
@@ -1061,11 +1335,11 @@ const loadData = async () => {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .metrics-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .form-row-group {
     grid-template-columns: 1fr;
   }
@@ -1075,19 +1349,19 @@ const loadData = async () => {
   .content-section {
     padding: 16px;
   }
-  
+
   .metric-card {
     padding: 16px;
   }
-  
+
   .chart-card {
     padding: 16px;
   }
-  
+
   .data-header {
     padding: 16px;
   }
-  
+
   .data-item {
     padding: 12px 16px;
   }

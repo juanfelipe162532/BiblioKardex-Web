@@ -3,12 +3,11 @@
     <!-- Navigation Drawer -->
     <v-navigation-drawer
       v-model="drawer"
-      :rail="!mobile && rail"
+      :rail="false"
       :permanent="!mobile"
       :temporary="mobile"
-      @click="!mobile && (rail = false)"
       app
-      class="drawer-custom"
+      :class="['drawer-custom', { blocked: isLocked }]"
     >
       <template #prepend>
         <div class="pa-4">
@@ -63,14 +62,27 @@
       class="app-bar-custom"
     >
       <v-app-bar-nav-icon
-        @click.stop="mobile ? (drawer = !drawer) : (rail = !rail)"
+        v-if="!isLocked"
+        @click.stop="mobile ? (drawer = !drawer) : null"
         class="ml-2"
       ></v-app-bar-nav-icon>
+
+      <!-- Subscription status -->
+      <div class="ml-3 d-flex align-center" v-if="subscription">
+        <v-chip v-if="isTrialing" size="small" class="mr-2 subscription-chip gradient-blue" pill>
+          <v-icon start size="16">mdi-information</v-icon>
+          Prueba gratuita: {{ trialDaysLeft }} días restantes • Mejora en la app móvil
+        </v-chip>
+        <v-chip v-else-if="isLocked" size="small" class="mr-2 subscription-chip gradient-blue" pill>
+          <v-icon start size="16">mdi-lock-alert</v-icon>
+          Suscripción bloqueada • Mejora en la app móvil
+        </v-chip>
+      </div>
 
       <v-spacer></v-spacer>
 
       <!-- User Profile -->
-      <v-menu offset-y>
+      <v-menu offset-y v-if="!isLocked">
         <template #activator="{ props }">
           <v-btn
             v-bind="props"
@@ -125,14 +137,14 @@
     </v-app-bar>
 
     <!-- Main Content -->
-    <v-main class="main-content">
+    <v-main :class="['main-content', { blocked: isLocked }]">
       <router-view />
     </v-main>
 
     <!-- Bottom Navigation for Mobile -->
     <v-bottom-navigation
       v-model="bottomNav"
-      class="d-md-none bottom-nav-custom"
+      :class="['d-md-none bottom-nav-custom', { blocked: isLocked }]"
       app
       grow
     >
@@ -154,6 +166,7 @@ import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useDisplay } from 'vuetify'
+import { apiService, type SubscriptionInfo } from '@/services'
 
 const router = useRouter()
 const route = useRoute()
@@ -161,8 +174,10 @@ const authStore = useAuthStore()
 const { mobile } = useDisplay()
 
 const drawer = ref(true)
-const rail = ref(false)
+const rail = ref(false) // Mantener false siempre para evitar modo "rail"
 const bottomNav = ref('dashboard')
+const subscription = ref<SubscriptionInfo | null>(null)
+const subscriptionLoading = ref(false)
 
 const menuItems = [
   { title: 'Inicio', icon: 'mdi-home', to: '/dashboard' },
@@ -187,6 +202,32 @@ const userInitials = computed(() => {
   return (first + second).toUpperCase()
 })
 
+const isLocked = computed(() => (subscription.value?.status || '').toUpperCase() === 'LOCKED')
+const isTrialing = computed(() => (subscription.value?.status || '').toUpperCase() === 'TRIALING')
+const trialDaysLeft = computed(() => {
+  const end = subscription.value?.trialEnd ? new Date(subscription.value.trialEnd) : null
+  if (!end) return 0
+  const ms = end.getTime() - Date.now()
+  const days = Math.ceil(ms / (1000 * 60 * 60 * 24))
+  return Math.max(0, days)
+})
+
+async function loadSubscription() {
+  const bibliotecaId = authStore.user?.bibliotecaId
+  if (!bibliotecaId) return
+  subscriptionLoading.value = true
+  try {
+    const resp = await apiService.getSubscription(bibliotecaId)
+    if (resp.success && resp.data) {
+      subscription.value = resp.data
+    }
+  } catch (e) {
+    console.warn('No se pudo cargar suscripción:', e)
+  } finally {
+    subscriptionLoading.value = false
+  }
+}
+
 // Update bottom navigation based on route
 watch(() => route.path, (newPath) => {
   const item = bottomNavItems.find(item => item.to === newPath)
@@ -204,10 +245,15 @@ const handleLogout = () => {
 watch(mobile, (isMobile) => {
   if (isMobile) {
     drawer.value = false
-    rail.value = false
   } else {
     drawer.value = true
   }
+  rail.value = false
+}, { immediate: true })
+
+// Cargar suscripción al montar y cuando cambie biblioteca
+watch(() => authStore.user?.bibliotecaId, (newId) => {
+  if (newId) loadSubscription()
 }, { immediate: true })
 </script>
 
@@ -277,6 +323,12 @@ watch(mobile, (isMobile) => {
   background: #F8FAFC;
 }
 
+.blocked {
+  pointer-events: none;
+  opacity: 0.6;
+  filter: grayscale(0.2);
+}
+
 .bottom-nav-custom {
   border-top: 1px solid #E2E8F0;
 }
@@ -288,5 +340,17 @@ watch(mobile, (isMobile) => {
 .bottom-nav-custom .v-btn--active {
   color: #1E40AF;
   background: rgba(30, 64, 175, 0.1);
+}
+
+/* Subscription chip */
+.subscription-chip {
+  color: #ffffff !important;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.35) !important;
+}
+
+.gradient-blue {
+  background: linear-gradient(135deg, #3B82F6 0%, #6366F1 100%) !important;
 }
 </style>

@@ -231,7 +231,7 @@ const loadChartsData = async () => {
     }
     const counts = new Map(months.map(m => [m.key, 0]))
     loans.forEach(l => {
-      const d = new Date(l.fechaPrestamo || l['createdAt'] || l['fechaCreacion'])
+      const d = new Date(l.fechaPrestamo)
       if (!isNaN(d.getTime())) {
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
         if (counts.has(key)) counts.set(key, (counts.get(key) || 0) + 1)

@@ -97,9 +97,17 @@ class ApiService {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const passwordHash = await this.sha256Hex(credentials.password)
 
+    // Importar dinámicamente el servicio de dispositivo
+    const { getDeviceInfo } = await import('./device.service')
+    const deviceInfo = getDeviceInfo('1.0.0')
+
     const raw = await this.request<any>('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email: credentials.email, passwordHash }),
+      body: JSON.stringify({
+        email: credentials.email,
+        passwordHash,
+        deviceInfo // Incluir información del dispositivo
+      }),
     })
 
     // Normalizar respuesta del backend
@@ -114,16 +122,38 @@ class ApiService {
       this.setToken(response.token)
     }
 
+    // Guardar sessionToken si está presente
+    if (raw?.data?.sessionToken) {
+      const { saveSessionToken } = await import('./device-session.service')
+      saveSessionToken(raw.data.sessionToken)
+    }
+
     return response
   }
 
   async logout(): Promise<void> {
     try {
+      // Obtener sessionToken
+      const { getSessionToken, clearSessionToken } = await import('./device-session.service')
+      const sessionToken = getSessionToken()
+
       await this.request('/api/auth/logout', {
         method: 'POST',
+        headers: {
+          ...(sessionToken && { 'X-Session-Token': sessionToken })
+        },
+        body: JSON.stringify({
+          ...(sessionToken && { sessionToken })
+        })
       })
+
+      // Limpiar sessionToken
+      clearSessionToken()
     } catch (error) {
       console.warn('Logout request failed:', error)
+      // Limpiar sessionToken de todas formas
+      const { clearSessionToken } = await import('./device-session.service')
+      clearSessionToken()
     } finally {
       this.clearToken()
     }
@@ -403,6 +433,39 @@ class ApiService {
 
 // Instancia singleton
 export const apiService = new ApiService()
+
+// Lightweight fetch wrapper for services expecting an `apiClient` with get/post/put/delete.
+// It automatically prefixes endpoints with `/api` and attaches the auth token if present.
+type ApiClientOptions = { headers?: Record<string, string> }
+type ApiClientBodyOptions = ApiClientOptions & { }
+
+async function http<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', endpoint: string, body?: any, options: ApiClientOptions = {}): Promise<T> {
+  const url = `${BASE_URL}/api${endpoint.startsWith('/') ? '' : '/'}${endpoint}`.replace(/\/api\/api\//, '/api/')
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(options.headers || {}) }
+  const storedToken = localStorage.getItem('auth_token')
+  if (storedToken && !headers['Authorization']) headers['Authorization'] = `Bearer ${storedToken}`
+
+  const init: RequestInit = {
+    method,
+    headers,
+    ...(body !== undefined ? { body: typeof body === 'string' ? body : JSON.stringify(body) } : {})
+  }
+
+  const res = await fetch(url, init)
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    const msg = (data && (data.message || data.error)) || `HTTP ${res.status}: ${res.statusText}`
+    throw new Error(msg)
+  }
+  return data as T
+}
+
+export const apiClient = {
+  get: <T = any>(endpoint: string, options?: ApiClientOptions) => http<T>('GET', endpoint, undefined, options),
+  post: <T = any>(endpoint: string, body?: any, options?: ApiClientBodyOptions) => http<T>('POST', endpoint, body, options),
+  put: <T = any>(endpoint: string, body?: any, options?: ApiClientBodyOptions) => http<T>('PUT', endpoint, body, options),
+  delete: <T = any>(endpoint: string, options?: { data?: any } & ApiClientOptions) => http<T>('DELETE', endpoint, options?.data, options)
+}
 
 // Tipos para responses
 export interface Statistics {

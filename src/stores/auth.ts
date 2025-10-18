@@ -42,6 +42,7 @@ export const useAuthStore = defineStore('auth', () => {
   const error = ref<string | null>(null)
 
   const isAuthenticated = computed(() => !!user.value && !!session.value)
+  const isAdmin = computed(() => (user.value?.role || '').toUpperCase() === 'ADMIN')
   const hasLibrary = computed(() => !!session.value?.biblioteca)
   const biblioteca = computed(() => session.value?.biblioteca || null)
   const config = computed(() => session.value?.config || null)
@@ -93,6 +94,7 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     try {
       await apiService.logout()
+      await apiService.adminLogout().catch(() => {})
     } catch (err) {
       console.error('Logout error:', err)
     } finally {
@@ -134,6 +136,19 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('auth_session', JSON.stringify(sessionData))
   }
 
+  // Admin session setter (minimal session structure without biblioteca contexto)
+  const setAdminSession = (adminUser: User) => {
+    user.value = { ...adminUser, role: 'ADMIN' }
+    session.value = {
+      biblioteca: undefined as any, // admin has no library context
+      operadorActual: user.value,
+      sessionId: `admin_${Date.now()}`,
+      config: { maxPrestamos: 0, diasPrestamo: 0 }
+    } as any
+    localStorage.setItem('auth_user', JSON.stringify(user.value))
+    localStorage.setItem('auth_session', JSON.stringify(session.value))
+  }
+
   const clearSession = () => {
     user.value = null
     session.value = null
@@ -168,12 +183,14 @@ export const useAuthStore = defineStore('auth', () => {
     loading,
     error,
     isAuthenticated,
+    isAdmin,
     hasLibrary,
     signIn,
     signOut,
     clearError,
     updateUser,
     setSession,
+    setAdminSession,
     clearSession,
     verifyToken,
     initializeAuth

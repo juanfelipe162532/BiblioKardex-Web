@@ -197,6 +197,8 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import logoUrl from '@/assets/logo.png'
 import QRCode from 'qrcode-generator'
+import { saveSessionToken, startSessionHeartbeat, updateActivity, revokeAllOtherSessions } from '@/services/device-session.service'
+import { getDeviceInfo } from '@/services/device.service'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -320,6 +322,48 @@ const startPolling = () => {
             email: payload.email || payload.biblioteca?.email || '',
             bibliotecaId: payload.bibliotecaId || payload.biblioteca?._id || payload.biblioteca?.id,
             role: payload.role || 'USER'
+          }
+        }
+
+        // Ensure a DeviceSession exists for this web client using explicit init endpoint
+        try {
+          const bibliotecaId = payload?.biblioteca?._id || payload?.biblioteca?.id
+          const operadorId = payload?.operadorActual?._id || payload?.operadorActual?.id
+          if (bibliotecaId && operadorId) {
+            const deviceInfo = getDeviceInfo(import.meta.env.VITE_APP_VERSION || '1.0.0')
+            const resp = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/device-sessions/init-web`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ bibliotecaId, operadorId, deviceInfo })
+            })
+            if (resp.ok) {
+              const body = await resp.json()
+              if (body?.data?.sessionToken) {
+                saveSessionToken(body.data.sessionToken)
+                try { await updateActivity() } catch {}
+                startSessionHeartbeat()
+                // Opcional: revocar otras sesiones del mismo operador/biblioteca
+                try { await revokeAllOtherSessions(bibliotecaId, operadorId) } catch {}
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Fallo creando sesión web explícita:', e)
+        }
+
+        // Fallback: If backend provided a sessionToken in the QR status response, apply it
+        if (data.data.sessionToken) {
+          try {
+            saveSessionToken(data.data.sessionToken)
+            try { await updateActivity() } catch {}
+            startSessionHeartbeat()
+            const bibliotecaId = payload?.biblioteca?._id || payload?.biblioteca?.id
+            const operadorId = payload?.operadorActual?._id || payload?.operadorActual?.id
+            if (bibliotecaId && operadorId) {
+              try { await revokeAllOtherSessions(bibliotecaId, operadorId) } catch {}
+            }
+          } catch (e) {
+            console.warn('No se pudo inicializar la sesión de dispositivo (fallback):', e)
           }
         }
 

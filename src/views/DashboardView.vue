@@ -22,6 +22,10 @@
 
     <!-- Statistics Section -->
     <div class="content-section">
+      <div v-if="isAdmin" class="section-header">
+        <h2 class="section-title">Panel de Administración</h2>
+        <p class="section-subtitle">Gestión global del sistema</p>
+      </div>
       <div class="section-header">
         <h2 class="section-title">Resumen General</h2>
         <p class="section-subtitle">Estado actual de tu biblioteca</p>
@@ -47,43 +51,55 @@
         <v-progress-circular indeterminate color="primary" size="40"></v-progress-circular>
         <p class="loading-text">Cargando estadísticas...</p>
       </div>
-    </div>
 
-    <!-- Recent Activity Section -->
-    <div class="content-section">
-      <div class="section-header">
-        <h2 class="section-title">Actividad Reciente</h2>
-        <v-btn variant="text" color="primary" size="small" class="view-all-btn">
-          Ver todo
-          <v-icon end size="16">mdi-arrow-right</v-icon>
-        </v-btn>
-      </div>
-
-      <div v-if="recentActivity.length > 0" class="activity-container">
-        <div 
-          v-for="(activity, index) in recentActivity"
-          :key="index"
-          class="activity-item"
-        >
-          <div class="activity-icon" :style="`background-color: ${activity.color}20`">
-            <v-icon :color="activity.color" size="16">{{ activity.icon }}</v-icon>
+      <!-- Admin health + actions -->
+      <div v-if="isAdmin" class="mt-6">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-header"><div class="stat-icon" style="background-color:#06B6D420"><v-icon color="#06B6D4">mdi-server</v-icon></div><p class="stat-label">Base de Datos</p></div>
+            <h3 class="stat-value">{{ adminHealth?.db?.ok ? 'OK' : 'Error' }}</h3>
+            <div class="stat-trend"><v-icon size="14" :color="adminHealth?.db?.ok ? 'success' : 'error'">{{ adminHealth?.db?.ok ? 'mdi-check-circle' : 'mdi-alert' }}</v-icon><span class="trend-text">Estado</span></div>
           </div>
-          <div class="activity-content">
-            <h4 class="activity-title">{{ activity.title }}</h4>
-            <p class="activity-subtitle">{{ activity.subtitle }}</p>
+          <div class="stat-card">
+            <div class="stat-header"><div class="stat-icon" style="background-color:#8B5CF620"><v-icon color="#8B5CF6">mdi-robot</v-icon></div><p class="stat-label">Análisis IA</p></div>
+            <h3 class="stat-value">{{ adminHealth?.analysis?.configured ? 'Configurado' : 'No Config.' }}</h3>
+            <div class="stat-trend"><v-icon size="14" :color="adminHealth?.analysis?.configured ? 'success' : 'warning'">{{ adminHealth?.analysis?.configured ? 'mdi-check-circle' : 'mdi-alert' }}</v-icon><span class="trend-text">Configuración</span></div>
           </div>
-          <span class="activity-time">{{ activity.time }}</span>
+          <div class="stat-card">
+            <div class="stat-header"><div class="stat-icon" style="background-color:#10B98120"><v-icon color="#10B981">mdi-email</v-icon></div><p class="stat-label">Soporte</p></div>
+            <h3 class="stat-value">Contacto</h3>
+            <div class="stat-trend"><a href="mailto:soporte@bibliokardex.app" class="trend-text">soporte@bibliokardex.app</a></div>
+          </div>
         </div>
       </div>
+    </div>
 
-      <div v-else class="empty-state">
-        <v-icon color="grey-lighten-1" size="48">mdi-clipboard-text-outline</v-icon>
-        <p class="empty-text">No hay actividad reciente</p>
+    <!-- Admin Analytics Section -->
+    <div v-if="isAdmin" class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">Monitoreo Global</h2>
+        <p class="section-subtitle">Escaneos por mes y top bibliotecas</p>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3 class="chart-title">Escaneos por mes</h3>
+          <div class="chart-container">
+            <canvas ref="adminSeriesChart" id="adminSeriesChart"></canvas>
+          </div>
+        </div>
+        
+        <div class="chart-card">
+          <h3 class="chart-title">Top bibliotecas por escaneos</h3>
+          <div class="chart-container">
+            <canvas ref="adminTopChart" id="adminTopChart"></canvas>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Analytics Section -->
-    <div class="content-section">
+    <!-- Analytics Section (non-admin) -->
+    <div v-if="!isAdmin" class="content-section">
       <div class="section-header">
         <h2 class="section-title">Análisis y Tendencias</h2>
         <p class="section-subtitle">Visualización de datos de tu biblioteca</p>
@@ -143,18 +159,35 @@ const dashboard = useDashboardStore()
 
 const loansChart = ref<HTMLCanvasElement>()
 const categoriesChart = ref<HTMLCanvasElement>()
+const adminSeriesChart = ref<HTMLCanvasElement>()
+const adminTopChart = ref<HTMLCanvasElement>()
 let loansChartInstance: Chart | null = null
 let categoriesChartInstance: Chart | null = null
+let adminSeriesChartInstance: Chart | null = null
+let adminTopChartInstance: Chart | null = null
 
-const libraryName = computed(() => authStore.biblioteca?.nombre || 'Biblioteca')
+const isAdmin = computed(() => (authStore.user?.role || '').toUpperCase() === 'ADMIN')
+const libraryName = computed(() => isAdmin.value ? 'Panel de Administración' : (authStore.biblioteca?.nombre || 'Biblioteca'))
 
 
 
-const statisticsLoading = computed(() => dashboard.loading)
+const adminLoading = ref(false)
+const statisticsLoading = computed(() => isAdmin.value ? adminLoading.value : dashboard.loading)
 
 const numberFmt = new Intl.NumberFormat('es-CO')
 
+const adminStats = ref<{ totalUsers: number; totalLibraries: number; totalAnalyzedBooks: number } | null>(null)
+const adminHealth = ref<any>(null)
+const adminMetrics = ref<{ months: string[]; series: Record<string, number[]>; totals: Record<string, number>; topLibraries: Array<{ nombre: string; scans: number }> } | null>(null)
 const statsCards = computed(() => {
+  if (isAdmin.value) {
+    const a = adminStats.value
+    return [
+      { label: 'Usuarios', value: numberFmt.format(a?.totalUsers ?? 0), icon: 'mdi-account-group', color: '#6366F1' },
+      { label: 'Bibliotecas', value: numberFmt.format(a?.totalLibraries ?? 0), icon: 'mdi-library', color: '#10B981' },
+      { label: 'Libros analizados', value: numberFmt.format(a?.totalAnalyzedBooks ?? 0), icon: 'mdi-book-search', color: '#F59E0B' },
+    ]
+  }
   const s = dashboard.statistics
   return [
     { label: 'Total de Libros', value: numberFmt.format(s?.totalBooks ?? 0), icon: 'mdi-book-outline', color: '#6366F1' },
@@ -214,6 +247,7 @@ const categoryLabels = ref<string[]>([])
 const categoryValues = ref<number[]>([])
 
 const loadChartsData = async () => {
+  if (isAdmin.value) return
   const bibliotecaId = authStore.user?.bibliotecaId
   if (!bibliotecaId) return
 
@@ -265,6 +299,7 @@ const loadChartsData = async () => {
 }
 
 const createCharts = async () => {
+  if (isAdmin.value) return
   await nextTick()
   
   // Loans Chart
@@ -365,14 +400,74 @@ const createCharts = async () => {
   }
 }
 
-onMounted(async () => {
-  const id = authStore.user?.bibliotecaId
-  if (id) {
-    dashboard.loadStatistics(id)
+const loadAdminData = async () => {
+  if (!isAdmin.value) return
+  adminLoading.value = true
+  try {
+    const [s, h, m] = await Promise.all([
+      apiService.getAdminStats(),
+      apiService.getAdminHealth(),
+      apiService.getAdminMetrics(6)
+    ])
+    adminStats.value = s?.data || null
+    adminHealth.value = h?.data || null
+    adminMetrics.value = m?.data || null
+  } catch (e) {
+    console.warn('No se pudo cargar datos admin:', e)
+  } finally {
+    adminLoading.value = false
   }
-  await loadChartsData()
-  await createCharts()
+}
+
+onMounted(async () => {
+  if (isAdmin.value) {
+    await loadAdminData()
+    await createAdminCharts()
+  } else {
+    const id = authStore.user?.bibliotecaId
+    if (id) {
+      dashboard.loadStatistics(id)
+    }
+    await loadChartsData()
+    await createCharts()
+  }
 })
+
+const createAdminCharts = async () => {
+  await nextTick()
+  if (!adminMetrics.value) return
+  const months = adminMetrics.value.months
+  const s = adminMetrics.value.series
+
+  // Destroy previous
+  if (adminSeriesChartInstance) adminSeriesChartInstance.destroy()
+  if (adminTopChartInstance) adminTopChartInstance.destroy()
+
+  if (adminSeriesChart.value) {
+    adminSeriesChartInstance = new Chart(adminSeriesChart.value, {
+      type: 'bar',
+      data: {
+        labels: months,
+        datasets: [
+          { label: 'Libros', data: s['scan.book'] || [], backgroundColor: 'rgba(99, 102, 241, 0.8)' },
+          { label: 'Préstamos', data: s['scan.loan'] || [], backgroundColor: 'rgba(16, 185, 129, 0.8)' },
+          { label: 'Devoluciones', data: s['scan.return'] || [], backgroundColor: 'rgba(245, 158, 11, 0.8)' },
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } }
+    })
+  }
+
+  if (adminTopChart.value) {
+    const labels = (adminMetrics.value.topLibraries || []).map(t => t.nombre)
+    const data = (adminMetrics.value.topLibraries || []).map(t => t.scans)
+    adminTopChartInstance = new Chart(adminTopChart.value, {
+      type: 'bar',
+      data: { labels, datasets: [{ label: 'Escaneos', data, backgroundColor: 'rgba(139, 92, 246, 0.8)' }] },
+      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    })
+  }
+}
 
 // Recargar si cambia la biblioteca del usuario
 watch(() => authStore.user?.bibliotecaId, (newId) => {

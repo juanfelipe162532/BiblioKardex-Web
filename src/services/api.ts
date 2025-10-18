@@ -27,11 +27,13 @@ export interface ApiError {
 class ApiService {
   private baseUrl: string
   private token: string | null = null
+  private adminToken: string | null = null
 
   constructor() {
     this.baseUrl = BASE_URL
     // Recuperar token del localStorage si existe
     this.token = localStorage.getItem('auth_token')
+    this.adminToken = localStorage.getItem('admin_session_token')
   }
 
   setToken(token: string) {
@@ -42,6 +44,16 @@ class ApiService {
   clearToken() {
     this.token = null
     localStorage.removeItem('auth_token')
+  }
+
+  setAdminToken(token: string) {
+    this.adminToken = token
+    localStorage.setItem('admin_session_token', token)
+  }
+
+  clearAdminToken() {
+    this.adminToken = null
+    localStorage.removeItem('admin_session_token')
   }
 
   private async request<T>(
@@ -59,6 +71,9 @@ class ApiService {
 
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`
+    }
+    if (this.adminToken && !headers['X-Admin-Session']) {
+      headers['X-Admin-Session'] = this.adminToken
     }
 
     // Note: x-user-email header removed due to CORS policy restrictions
@@ -97,9 +112,17 @@ class ApiService {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const passwordHash = await this.sha256Hex(credentials.password)
 
+    // Importar dinámicamente el servicio de dispositivo
+    const { getDeviceInfo } = await import('./device.service')
+    const deviceInfo = getDeviceInfo('1.0.0')
+
     const raw = await this.request<any>('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email: credentials.email, passwordHash }),
+      body: JSON.stringify({
+        email: credentials.email,
+        passwordHash,
+        deviceInfo // Incluir información del dispositivo
+      }),
     })
 
     // Normalizar respuesta del backend
@@ -114,16 +137,121 @@ class ApiService {
       this.setToken(response.token)
     }
 
+    // Guardar sessionToken si está presente
+    if (raw?.data?.sessionToken) {
+      const { saveSessionToken } = await import('./device-session.service')
+      saveSessionToken(raw.data.sessionToken)
+    }
+
     return response
+  }
+
+  // Admin Authentication
+  async adminLogin(email: string, password: string): Promise<{ success: boolean; user?: any; message?: string }> {
+    const passwordHash = await this.sha256Hex(password)
+    const raw = await this.request<any>('/api/admin/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, passwordHash })
+    })
+    const success = raw?.status === 'success'
+    if (success && raw?.data?.sessionToken) {
+      this.setAdminToken(raw.data.sessionToken)
+    }
+    return { success, user: raw?.data?.user, message: raw?.message }
+  }
+
+  async adminLogout(): Promise<void> {
+    try {
+      await this.request('/api/admin/logout', { method: 'POST' })
+    } finally {
+      this.clearAdminToken()
+    }
+  }
+
+  async getAdminStats(): Promise<any> {
+    return this.request<any>('/api/admin/stats')
+  }
+
+  async getAdminHealth(): Promise<any> {
+    return this.request<any>('/api/admin/health')
+  }
+
+  async getAdminUsers(page = 1, limit = 20, search = ''): Promise<any> {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit), ...(search ? { search } : {}) })
+    return this.request<any>(`/api/admin/users?${params}`)
+  }
+
+  async getAdminMetrics(months = 6): Promise<any> {
+    const params = new URLSearchParams({ months: String(months) })
+    return this.request<any>(`/api/admin/metrics?${params}`)
+  }
+
+  async getAdminUserSubscription(userId: string): Promise<any> {
+    return this.request<any>(`/api/admin/users/${userId}/subscription`)
+  }
+
+  async updateAdminUserSubscription(userId: string, payload: { planKey?: string; status?: string; trialStart?: string | null; trialEnd?: string | null; periodStart?: string | null; periodEnd?: string | null }): Promise<any> {
+    return this.request<any>(`/api/admin/users/${userId}/subscription`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload)
+    })
+  }
+
+  // Support (Admin)
+  async adminGetTickets(status?: 'OPEN' | 'CLOSED'): Promise<any> {
+    const params = new URLSearchParams({ ...(status ? { status } : {}) })
+    return this.request<any>(`/api/support/admin/tickets?${params}`)
+  }
+
+  async adminGetTicket(ticketId: string): Promise<any> {
+    return this.request<any>(`/api/support/tickets/${ticketId}`)
+  }
+
+  async adminReplyTicket(ticketId: string, message: string): Promise<any> {
+    return this.request<any>(`/api/support/admin/tickets/${ticketId}/reply`, {
+      method: 'POST',
+      body: JSON.stringify({ message })
+    })
+  }
+
+  async adminUpdateTicketStatus(ticketId: string, status: 'OPEN' | 'CLOSED'): Promise<any> {
+    return this.request<any>(`/api/support/admin/tickets/${ticketId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    })
+  }
+
+  async adminGetNotifications(): Promise<any> {
+    return this.request<any>(`/api/support/admin/notifications`)
+  }
+
+  async markNotificationRead(id: string): Promise<any> {
+    return this.request<any>(`/api/support/notifications/${id}/read`, { method: 'POST' })
   }
 
   async logout(): Promise<void> {
     try {
+      // Obtener sessionToken
+      const { getSessionToken, clearSessionToken } = await import('./device-session.service')
+      const sessionToken = getSessionToken()
+
       await this.request('/api/auth/logout', {
         method: 'POST',
+        headers: {
+          ...(sessionToken && { 'X-Session-Token': sessionToken })
+        },
+        body: JSON.stringify({
+          ...(sessionToken && { sessionToken })
+        })
       })
+
+      // Limpiar sessionToken
+      clearSessionToken()
     } catch (error) {
       console.warn('Logout request failed:', error)
+      // Limpiar sessionToken de todas formas
+      const { clearSessionToken } = await import('./device-session.service')
+      clearSessionToken()
     } finally {
       this.clearToken()
     }
@@ -403,6 +531,39 @@ class ApiService {
 
 // Instancia singleton
 export const apiService = new ApiService()
+
+// Lightweight fetch wrapper for services expecting an `apiClient` with get/post/put/delete.
+// It automatically prefixes endpoints with `/api` and attaches the auth token if present.
+type ApiClientOptions = { headers?: Record<string, string> }
+type ApiClientBodyOptions = ApiClientOptions & { }
+
+async function http<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', endpoint: string, body?: any, options: ApiClientOptions = {}): Promise<T> {
+  const url = `${BASE_URL}/api${endpoint.startsWith('/') ? '' : '/'}${endpoint}`.replace(/\/api\/api\//, '/api/')
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(options.headers || {}) }
+  const storedToken = localStorage.getItem('auth_token')
+  if (storedToken && !headers['Authorization']) headers['Authorization'] = `Bearer ${storedToken}`
+
+  const init: RequestInit = {
+    method,
+    headers,
+    ...(body !== undefined ? { body: typeof body === 'string' ? body : JSON.stringify(body) } : {})
+  }
+
+  const res = await fetch(url, init)
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    const msg = (data && (data.message || data.error)) || `HTTP ${res.status}: ${res.statusText}`
+    throw new Error(msg)
+  }
+  return data as T
+}
+
+export const apiClient = {
+  get: <T = any>(endpoint: string, options?: ApiClientOptions) => http<T>('GET', endpoint, undefined, options),
+  post: <T = any>(endpoint: string, body?: any, options?: ApiClientBodyOptions) => http<T>('POST', endpoint, body, options),
+  put: <T = any>(endpoint: string, body?: any, options?: ApiClientBodyOptions) => http<T>('PUT', endpoint, body, options),
+  delete: <T = any>(endpoint: string, options?: { data?: any } & ApiClientOptions) => http<T>('DELETE', endpoint, options?.data, options)
+}
 
 // Tipos para responses
 export interface Statistics {

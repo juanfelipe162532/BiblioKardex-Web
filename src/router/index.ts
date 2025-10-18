@@ -12,6 +12,11 @@ const router = createRouter({
       component: LoginView,
     },
     {
+      path: '/admin',
+      name: 'admin-login',
+      component: () => import('../views/AdminLoginView.vue'),
+    },
+    {
       path: '/login',
       redirect: '/'
     },
@@ -29,6 +34,30 @@ const router = createRouter({
           path: '',
           name: 'dashboard',
           component: () => import('../views/DashboardView.vue'),
+        }
+      ]
+    },
+    {
+      path: '/admin/users',
+      component: DashboardLayout,
+      meta: { requiresAuth: true, adminOnly: true },
+      children: [
+        {
+          path: '',
+          name: 'admin-users',
+          component: () => import('../views/AdminUsersView.vue'),
+        }
+      ]
+    },
+    {
+      path: '/admin/support',
+      component: DashboardLayout,
+      meta: { requiresAuth: true, adminOnly: true },
+      children: [
+        {
+          path: '',
+          name: 'admin-support',
+          component: () => import('../views/AdminSupportView.vue'),
         }
       ]
     },
@@ -90,6 +119,10 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/')
   } else if (to.path === '/' && authStore.isAuthenticated) {
+    next('/dashboard')
+  } else if (to.path === '/admin' && authStore.isAuthenticated) {
+    next('/dashboard')
+  } else if (to.meta.adminOnly && !authStore.isAdmin) {
     next('/dashboard')
   } else {
     next()

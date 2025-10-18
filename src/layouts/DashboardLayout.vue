@@ -89,19 +89,25 @@
             icon
             class="mr-2"
           >
-            <v-badge
-              color="warning"
-              dot
-              offset-x="10"
-              offset-y="10"
-            >
+            <v-badge v-if="isAdmin && notifCount>0" color="warning" :content="notifCount" offset-x="10" offset-y="10">
               <v-icon>mdi-bell-outline</v-icon>
             </v-badge>
+            <template v-else>
+              <v-icon>mdi-bell-outline</v-icon>
+            </template>
           </v-btn>
         </template>
-        <v-list>
-          <v-list-item>
+        <v-list style="min-width:320px">
+          <v-list-item v-if="!isAdmin || notifItems.length===0">
             <v-list-item-title>No hay notificaciones</v-list-item-title>
+          </v-list-item>
+          <v-list-item
+            v-for="n in notifItems"
+            :key="n.id"
+            @click="ackNotification(n)"
+          >
+            <v-list-item-title class="text-truncate">{{ n.title }}</v-list-item-title>
+            <v-list-item-subtitle class="text-truncate">{{ n.message }}</v-list-item-subtitle>
           </v-list-item>
         </v-list>
       </v-menu>
@@ -126,7 +132,7 @@
             <v-list-item-subtitle>{{ authStore.user?.email }}</v-list-item-subtitle>
           </v-list-item>
           <v-divider></v-divider>
-          <v-list-item @click="$router.push('/profile')">
+          <v-list-item v-if="!isAdmin" @click="$router.push('/profile')">
             <v-list-item-title>Perfil</v-list-item-title>
           </v-list-item>
           <v-list-item @click="handleLogout">
@@ -179,19 +185,42 @@ const bottomNav = ref('dashboard')
 const subscription = ref<SubscriptionInfo | null>(null)
 const subscriptionLoading = ref(false)
 
-const menuItems = [
-  { title: 'Inicio', icon: 'mdi-home', to: '/dashboard' },
-  { title: 'Usuarios', icon: 'mdi-account-group', to: '/users' },
-  { title: 'Informes', icon: 'mdi-chart-line', to: '/reports' },
-  { title: 'Perfil', icon: 'mdi-account', to: '/profile' }
-]
+const isAdmin = computed(() => (authStore.user?.role || '').toUpperCase() === 'ADMIN')
+const notifItems = ref<Array<{ id: string; title: string; message: string }>>([])
+const notifCount = ref(0)
+let notifTimer: any
 
-const bottomNavItems = [
-  { title: 'Inicio', icon: 'mdi-home', to: '/dashboard', value: 'dashboard' },
-  { title: 'Usuarios', icon: 'mdi-account-group', to: '/users', value: 'users' },
-  { title: 'Informes', icon: 'mdi-chart-line', to: '/reports', value: 'reports' },
-  { title: 'Perfil', icon: 'mdi-account', to: '/profile', value: 'profile' }
-]
+const menuItems = computed(() => {
+  if (isAdmin.value) {
+    return [
+      { title: 'Inicio', icon: 'mdi-home', to: '/dashboard' },
+      { title: 'Usuarios (Admin)', icon: 'mdi-shield-account', to: '/admin/users' },
+      { title: 'Soporte', icon: 'mdi-lifebuoy', to: '/admin/support' }
+    ]
+  }
+  return [
+    { title: 'Inicio', icon: 'mdi-home', to: '/dashboard' },
+    { title: 'Usuarios', icon: 'mdi-account-group', to: '/users' },
+    { title: 'Informes', icon: 'mdi-chart-line', to: '/reports' },
+    { title: 'Perfil', icon: 'mdi-account', to: '/profile' }
+  ]
+})
+
+const bottomNavItems = computed(() => {
+  if (isAdmin.value) {
+    return [
+      { title: 'Inicio', icon: 'mdi-home', to: '/dashboard', value: 'dashboard' },
+      { title: 'Usuarios (Admin)', icon: 'mdi-shield-account', to: '/admin/users', value: 'admin-users' },
+      { title: 'Soporte', icon: 'mdi-lifebuoy', to: '/admin/support', value: 'admin-support' }
+    ]
+  }
+  return [
+    { title: 'Inicio', icon: 'mdi-home', to: '/dashboard', value: 'dashboard' },
+    { title: 'Usuarios', icon: 'mdi-account-group', to: '/users', value: 'users' },
+    { title: 'Informes', icon: 'mdi-chart-line', to: '/reports', value: 'reports' },
+    { title: 'Perfil', icon: 'mdi-account', to: '/profile', value: 'profile' }
+  ]
+})
 
 const userInitials = computed(() => {
   const name = authStore.user?.nombre || 'U'
@@ -230,7 +259,8 @@ async function loadSubscription() {
 
 // Update bottom navigation based on route
 watch(() => route.path, (newPath) => {
-  const item = bottomNavItems.find(item => item.to === newPath)
+  const items = bottomNavItems.value || []
+  const item = items.find((it: any) => it.to === newPath)
   if (item) {
     bottomNav.value = item.value
   }
@@ -254,6 +284,62 @@ watch(mobile, (isMobile) => {
 // Cargar suscripción al montar y cuando cambie biblioteca
 watch(() => authStore.user?.bibliotecaId, (newId) => {
   if (newId) loadSubscription()
+}, { immediate: true })
+
+// Admin notifications polling
+async function fetchAdminNotifications() {
+  try {
+    const res = await apiService.adminGetNotifications()
+    const items = (res?.data?.items || []).map((n: any) => ({ id: n.id || n._id, title: n.title, message: n.message, read: !!n.read }))
+    // Detect new items by unseen ids
+    const newOnes = items.filter((i: any) => !notifItems.value.find((x: any) => x.id === i.id))
+    if (newOnes.length > 0) {
+      playBeep()
+    }
+    notifItems.value = items.slice(0, 10)
+    notifCount.value = items.filter((i: any) => !i.read).length
+  } catch (e) {
+    // ignore
+  }
+}
+
+function startNotifPolling() {
+  if (!isAdmin.value) return
+  if (notifTimer) clearInterval(notifTimer)
+  fetchAdminNotifications()
+  notifTimer = setInterval(fetchAdminNotifications, 5000)
+}
+
+function stopNotifPolling() {
+  if (notifTimer) { clearInterval(notifTimer); notifTimer = null }
+}
+
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const o = ctx.createOscillator()
+    const g = ctx.createGain()
+    o.type = 'sine'
+    o.frequency.value = 880
+    o.connect(g)
+    g.connect(ctx.destination)
+    g.gain.value = 0.05
+    o.start()
+    setTimeout(() => { o.stop(); ctx.close() }, 200)
+  } catch {}
+}
+
+async function ackNotification(n: any) {
+  try {
+    await apiService.markNotificationRead(n.id)
+    notifItems.value = notifItems.value.filter(x => x.id !== n.id)
+    notifCount.value = Math.max(0, notifCount.value - 1)
+  } catch {}
+}
+
+watch(isAdmin, (val) => {
+  stopNotifPolling()
+  if (val) startNotifPolling()
 }, { immediate: true })
 </script>
 

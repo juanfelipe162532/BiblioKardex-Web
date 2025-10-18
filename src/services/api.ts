@@ -27,11 +27,13 @@ export interface ApiError {
 class ApiService {
   private baseUrl: string
   private token: string | null = null
+  private adminToken: string | null = null
 
   constructor() {
     this.baseUrl = BASE_URL
     // Recuperar token del localStorage si existe
     this.token = localStorage.getItem('auth_token')
+    this.adminToken = localStorage.getItem('admin_session_token')
   }
 
   setToken(token: string) {
@@ -42,6 +44,16 @@ class ApiService {
   clearToken() {
     this.token = null
     localStorage.removeItem('auth_token')
+  }
+
+  setAdminToken(token: string) {
+    this.adminToken = token
+    localStorage.setItem('admin_session_token', token)
+  }
+
+  clearAdminToken() {
+    this.adminToken = null
+    localStorage.removeItem('admin_session_token')
   }
 
   private async request<T>(
@@ -59,6 +71,9 @@ class ApiService {
 
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`
+    }
+    if (this.adminToken && !headers['X-Admin-Session']) {
+      headers['X-Admin-Session'] = this.adminToken
     }
 
     // Note: x-user-email header removed due to CORS policy restrictions
@@ -129,6 +144,89 @@ class ApiService {
     }
 
     return response
+  }
+
+  // Admin Authentication
+  async adminLogin(email: string, password: string): Promise<{ success: boolean; user?: any; message?: string }> {
+    const passwordHash = await this.sha256Hex(password)
+    const raw = await this.request<any>('/api/admin/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, passwordHash })
+    })
+    const success = raw?.status === 'success'
+    if (success && raw?.data?.sessionToken) {
+      this.setAdminToken(raw.data.sessionToken)
+    }
+    return { success, user: raw?.data?.user, message: raw?.message }
+  }
+
+  async adminLogout(): Promise<void> {
+    try {
+      await this.request('/api/admin/logout', { method: 'POST' })
+    } finally {
+      this.clearAdminToken()
+    }
+  }
+
+  async getAdminStats(): Promise<any> {
+    return this.request<any>('/api/admin/stats')
+  }
+
+  async getAdminHealth(): Promise<any> {
+    return this.request<any>('/api/admin/health')
+  }
+
+  async getAdminUsers(page = 1, limit = 20, search = ''): Promise<any> {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit), ...(search ? { search } : {}) })
+    return this.request<any>(`/api/admin/users?${params}`)
+  }
+
+  async getAdminMetrics(months = 6): Promise<any> {
+    const params = new URLSearchParams({ months: String(months) })
+    return this.request<any>(`/api/admin/metrics?${params}`)
+  }
+
+  async getAdminUserSubscription(userId: string): Promise<any> {
+    return this.request<any>(`/api/admin/users/${userId}/subscription`)
+  }
+
+  async updateAdminUserSubscription(userId: string, payload: { planKey?: string; status?: string; trialStart?: string | null; trialEnd?: string | null; periodStart?: string | null; periodEnd?: string | null }): Promise<any> {
+    return this.request<any>(`/api/admin/users/${userId}/subscription`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload)
+    })
+  }
+
+  // Support (Admin)
+  async adminGetTickets(status?: 'OPEN' | 'CLOSED'): Promise<any> {
+    const params = new URLSearchParams({ ...(status ? { status } : {}) })
+    return this.request<any>(`/api/support/admin/tickets?${params}`)
+  }
+
+  async adminGetTicket(ticketId: string): Promise<any> {
+    return this.request<any>(`/api/support/tickets/${ticketId}`)
+  }
+
+  async adminReplyTicket(ticketId: string, message: string): Promise<any> {
+    return this.request<any>(`/api/support/admin/tickets/${ticketId}/reply`, {
+      method: 'POST',
+      body: JSON.stringify({ message })
+    })
+  }
+
+  async adminUpdateTicketStatus(ticketId: string, status: 'OPEN' | 'CLOSED'): Promise<any> {
+    return this.request<any>(`/api/support/admin/tickets/${ticketId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    })
+  }
+
+  async adminGetNotifications(): Promise<any> {
+    return this.request<any>(`/api/support/admin/notifications`)
+  }
+
+  async markNotificationRead(id: string): Promise<any> {
+    return this.request<any>(`/api/support/notifications/${id}/read`, { method: 'POST' })
   }
 
   async logout(): Promise<void> {

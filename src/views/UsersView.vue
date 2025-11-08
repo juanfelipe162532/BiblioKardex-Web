@@ -121,49 +121,8 @@
             <p v-if="user.email !== 'Sin email'" class="user-email">{{ user.email }}</p>
           </div>
 
-          <div class="user-stats">
-            <div class="stat-item">
-              <span class="stat-value">{{ user.loansCount }}</span>
-              <span class="stat-label">Total préstamos</span>
-            </div>
-            <div class="stat-divider"></div>
-            <div class="stat-item">
-              <span class="stat-value">{{ user.activeLoans }}</span>
-              <span class="stat-label">Activos</span>
-            </div>
-          </div>
-
           <div class="user-meta">
             <p class="last-loan">Último préstamo: {{ user.lastLoan }}</p>
-          </div>
-
-          <div class="user-actions">
-            <v-btn
-              variant="text"
-              color="primary"
-              size="small"
-              @click="viewUser(user)"
-            >
-              <v-icon start size="16">mdi-eye</v-icon>
-              Ver
-            </v-btn>
-            <v-btn
-              variant="text"
-              color="orange"
-              size="small"
-              @click="editUser(user)"
-            >
-              <v-icon start size="16">mdi-pencil</v-icon>
-              Editar
-            </v-btn>
-            <v-btn
-              variant="text"
-              color="error"
-              size="small"
-              @click="deleteUser(user)"
-            >
-              <v-icon size="16">mdi-delete</v-icon>
-            </v-btn>
           </div>
         </div>
       </div>
@@ -507,7 +466,7 @@ watch(filterType, () => {
 
 /* Header */
 .header-section {
-  background: linear-gradient(135deg, #1E3A8A 0%, #7C3AED 100%);
+  background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
   padding: 32px 0;
 }
 

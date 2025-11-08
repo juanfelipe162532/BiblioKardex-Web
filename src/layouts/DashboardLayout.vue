@@ -61,11 +61,6 @@
       app
       class="app-bar-custom"
     >
-      <v-app-bar-nav-icon
-        v-if="!isLocked"
-        @click.stop="mobile ? (drawer = !drawer) : null"
-        class="ml-2"
-      ></v-app-bar-nav-icon>
 
       <!-- Subscription status -->
       <div class="ml-3 d-flex align-center" v-if="subscription">
@@ -133,7 +128,7 @@
           </v-list-item>
           <v-divider></v-divider>
           <v-list-item v-if="!isAdmin" @click="$router.push('/profile')">
-            <v-list-item-title>Perfil</v-list-item-title>
+            <v-list-item-title>Configuración</v-list-item-title>
           </v-list-item>
           <v-list-item @click="handleLogout">
             <v-list-item-title>Cerrar Sesión</v-list-item-title>
@@ -202,7 +197,7 @@ const menuItems = computed(() => {
     { title: 'Inicio', icon: 'mdi-home', to: '/dashboard' },
     { title: 'Usuarios', icon: 'mdi-account-group', to: '/users' },
     { title: 'Informes', icon: 'mdi-chart-line', to: '/reports' },
-    { title: 'Perfil', icon: 'mdi-account', to: '/profile' }
+    { title: 'Configuración', icon: 'mdi-account', to: '/profile' }
   ]
 })
 
@@ -218,7 +213,7 @@ const bottomNavItems = computed(() => {
     { title: 'Inicio', icon: 'mdi-home', to: '/dashboard', value: 'dashboard' },
     { title: 'Usuarios', icon: 'mdi-account-group', to: '/users', value: 'users' },
     { title: 'Informes', icon: 'mdi-chart-line', to: '/reports', value: 'reports' },
-    { title: 'Perfil', icon: 'mdi-account', to: '/profile', value: 'profile' }
+    { title: 'Configuración', icon: 'mdi-account', to: '/profile', value: 'profile' }
   ]
 })
 

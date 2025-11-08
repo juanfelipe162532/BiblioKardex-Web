@@ -122,27 +122,6 @@
       </div>
     </div>
 
-    <!-- AI Features Section -->
-    <div class="content-section">
-      <div class="ai-features-card">
-        <div class="ai-header">
-          <div class="ai-icon-container">
-            <v-icon color="primary" size="24">mdi-auto-awesome</v-icon>
-          </div>
-          <div class="ai-text">
-            <h3 class="ai-title">Funciones de IA</h3>
-            <p class="ai-subtitle">Tecnología que simplifica la gestión</p>
-          </div>
-        </div>
-        
-        <div class="ai-features-grid">
-          <div v-for="(feature, index) in aiFeatures" :key="index" class="ai-feature-chip">
-            <v-icon size="14" class="feature-icon">{{ feature.icon }}</v-icon>
-            <span class="feature-label">{{ feature.label }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -231,12 +210,6 @@ const recentActivity = computed(() => {
   return [...books, ...loans].slice(0, 5)
 })
 
-const aiFeatures = [
-  { label: 'Reconocimiento OCR', icon: 'mdi-text-recognition' },
-  { label: 'Categorización', icon: 'mdi-tag-multiple' },
-  { label: 'Recomendaciones', icon: 'mdi-lightbulb' },
-  { label: 'Análisis de texto', icon: 'mdi-chart-line' }
-]
 
 
 // Data for charts
@@ -650,46 +623,6 @@ watch(() => authStore.user?.bibliotecaId, (newId) => {
 }
 
 .empty-text { margin: 0; color: #64748B; }
-
-/* AI features */
-.ai-features-card {
-  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-  border-radius: 20px;
-  padding: 20px;
-  color: #ffffff;
-}
-
-.ai-header { display: flex; align-items: center; gap: 12px; }
-
-.ai-icon-container {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.2);
-  display: grid;
-  place-items: center;
-}
-
-.ai-title { margin: 0; font-size: 18px; font-weight: 800; }
-.ai-subtitle { margin: 0; font-size: 14px; color: rgba(255, 255, 255, 0.85); }
-
-.ai-features-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-
-.ai-feature-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.16);
-  color: #ffffff;
-  transition: transform 0.15s ease;
-}
-
-.ai-feature-chip:hover { transform: translateY(-1px); }
-.feature-icon { color: #ffffff; }
 
 /* Charts */
 .charts-grid {

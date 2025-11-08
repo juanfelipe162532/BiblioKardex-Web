@@ -4,73 +4,8 @@
     <div class="header-section">
       <div class="header-content">
         <div class="title-section">
-          <h1 class="page-title">Perfil de Usuario</h1>
+          <h1 class="page-title">Configuración</h1>
           <p class="page-subtitle">Gestiona tu información personal y configuración</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Profile Overview Section -->
-    <div class="content-section">
-      <div class="profile-overview">
-        <!-- User Card -->
-        <div class="user-card">
-          <div class="user-avatar-section">
-            <div class="user-avatar" :style="`background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)`">
-              <span class="avatar-text">{{ userInitials }}</span>
-            </div>
-            <v-btn
-              variant="outlined"
-              color="primary"
-              size="small"
-              class="avatar-btn"
-            >
-              <v-icon start size="16">mdi-camera</v-icon>
-              Cambiar Foto
-            </v-btn>
-          </div>
-          
-          <div class="user-info">
-            <h2 class="user-name">{{ authStore.user?.nombre }}</h2>
-            <p class="user-email">{{ authStore.user?.email }}</p>
-            <div class="user-status">
-              <v-chip color="success" variant="tonal" size="small">
-                <v-icon start size="16">mdi-check-circle</v-icon>
-                Cuenta Verificada
-              </v-chip>
-            </div>
-          </div>
-        </div>
-
-        <!-- Stats Grid -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">
-              <v-icon color="primary" size="20">mdi-book-multiple</v-icon>
-            </div>
-            <div class="stat-content">
-              <span class="stat-value">156</span>
-              <span class="stat-label">Libros Agregados</span>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <v-icon color="success" size="20">mdi-hand-extended</v-icon>
-            </div>
-            <div class="stat-content">
-              <span class="stat-value">1,248</span>
-              <span class="stat-label">Préstamos</span>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <v-icon color="warning" size="20">mdi-account-group</v-icon>
-            </div>
-            <div class="stat-content">
-              <span class="stat-value">342</span>
-              <span class="stat-label">Usuarios</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -78,10 +13,7 @@
     <!-- Settings Tabs Section -->
     <div class="content-section">
       <div class="settings-container">
-        <div class="tabs-header">
-          <h2 class="section-title">Configuración</h2>
-          <p class="section-subtitle">Personaliza tu experiencia</p>
-        </div>
+
 
         <div class="tabs-container">
           <div class="tabs-nav">
@@ -524,7 +456,7 @@ const toggleTwoFactor = () => {
 
 /* Header */
 .header-section {
-  background: linear-gradient(135deg, #1E3A8A 0%, #7C3AED 100%);
+  background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
   padding: 32px 0;
 }
 
@@ -556,9 +488,8 @@ const toggleTwoFactor = () => {
 
 /* Profile Overview */
 .profile-overview {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 24px;
+  display: flex;
+  justify-content: center;
   margin-bottom: 32px;
 }
 
@@ -569,6 +500,8 @@ const toggleTwoFactor = () => {
   border: 1px solid #E2E8F0;
   text-align: center;
   transition: all 0.3s ease;
+  max-width: 400px;
+  width: 100%;
 }
 
 .user-card:hover {
@@ -598,11 +531,6 @@ const toggleTwoFactor = () => {
   font-size: 32px;
 }
 
-.avatar-btn {
-  text-transform: none;
-  font-weight: 600;
-}
-
 .user-name {
   margin: 0 0 8px 0;
   font-size: 24px;
@@ -611,57 +539,8 @@ const toggleTwoFactor = () => {
 }
 
 .user-email {
-  margin: 0 0 16px 0;
+  margin: 0;
   font-size: 14px;
-  color: #64748B;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-
-.stat-card {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 20px;
-  border: 1px solid #E2E8F0;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-  border-color: #CBD5E1;
-}
-
-.stat-icon {
-  width: 40px;
-  height: 40px;
-  background: #F8FAFC;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.stat-content {
-  flex: 1;
-}
-
-.stat-value {
-  display: block;
-  font-size: 20px;
-  font-weight: 800;
-  color: #1E293B;
-}
-
-.stat-label {
-  font-size: 12px;
   color: #64748B;
 }
 

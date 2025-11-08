@@ -7,11 +7,101 @@
           <h1 class="page-title">Informes y Reportes</h1>
           <p class="page-subtitle">Analiza el rendimiento y tendencias de tu biblioteca</p>
         </div>
-        <div class="header-actions">
-          <v-btn color="primary" variant="elevated" size="large" class="generate-btn" @click="showExportDialog = true">
-            <v-icon start>mdi-file-chart</v-icon>
-            Generar Informes
-          </v-btn>
+      </div>
+    </div>
+
+    <!-- Export Reports Section -->
+    <div class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">Generar Informes</h2>
+        <p class="section-subtitle">Descarga reportes detallados en Excel o PDF</p>
+      </div>
+
+      <div class="reports-info-banner">
+        <v-icon size="18" color="#1E3A8A">mdi-information</v-icon>
+        <span>Selecciona el formato de archivo y luego haz clic en Descargar</span>
+      </div>
+
+      <div class="reports-grid">
+        <!-- Inventory Report -->
+        <div class="report-card">
+          <div class="report-icon-wrapper inventory">
+            <v-icon size="32" color="white">mdi-clipboard-list</v-icon>
+          </div>
+          <div class="report-content">
+            <h3 class="report-title">Reporte de Inventario</h3>
+            <p class="report-description">Listado completo de libros, categorías y disponibilidad</p>
+            <div class="report-actions">
+              <v-btn-toggle v-model="inventoryFormat" density="compact" mandatory class="format-toggle">
+                <v-btn value="excel" size="small">
+                  <v-icon start size="16">mdi-file-excel</v-icon>
+                  Excel
+                </v-btn>
+                <v-btn value="pdf" size="small">
+                  <v-icon start size="16">mdi-file-pdf-box</v-icon>
+                  PDF
+                </v-btn>
+              </v-btn-toggle>
+              <v-btn color="primary" variant="elevated" @click="exportFormat = inventoryFormat; generateInventoryReport()" block class="mt-3">
+                <v-icon start>mdi-download</v-icon>
+                Descargar
+              </v-btn>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loans Report -->
+        <div class="report-card">
+          <div class="report-icon-wrapper loans">
+            <v-icon size="32" color="white">mdi-book-clock</v-icon>
+          </div>
+          <div class="report-content">
+            <h3 class="report-title">Reporte de Préstamos</h3>
+            <p class="report-description">Historial de todos los préstamos realizados</p>
+            <div class="report-actions">
+              <v-btn-toggle v-model="loansFormat" density="compact" mandatory class="format-toggle">
+                <v-btn value="excel" size="small">
+                  <v-icon start size="16">mdi-file-excel</v-icon>
+                  Excel
+                </v-btn>
+                <v-btn value="pdf" size="small">
+                  <v-icon start size="16">mdi-file-pdf-box</v-icon>
+                  PDF
+                </v-btn>
+              </v-btn-toggle>
+              <v-btn color="primary" variant="elevated" @click="exportFormat = loansFormat; generateLoansReport()" block class="mt-3">
+                <v-icon start>mdi-download</v-icon>
+                Descargar
+              </v-btn>
+            </div>
+          </div>
+        </div>
+
+        <!-- Returns Report -->
+        <div class="report-card">
+          <div class="report-icon-wrapper returns">
+            <v-icon size="32" color="white">mdi-keyboard-return</v-icon>
+          </div>
+          <div class="report-content">
+            <h3 class="report-title">Reporte de Devoluciones</h3>
+            <p class="report-description">Registro completo de devoluciones de libros</p>
+            <div class="report-actions">
+              <v-btn-toggle v-model="returnsFormat" density="compact" mandatory class="format-toggle">
+                <v-btn value="excel" size="small">
+                  <v-icon start size="16">mdi-file-excel</v-icon>
+                  Excel
+                </v-btn>
+                <v-btn value="pdf" size="small">
+                  <v-icon start size="16">mdi-file-pdf-box</v-icon>
+                  PDF
+                </v-btn>
+              </v-btn-toggle>
+              <v-btn color="primary" variant="elevated" @click="exportFormat = returnsFormat; generateReturnsReport()" block class="mt-3">
+                <v-icon start>mdi-download</v-icon>
+                Descargar
+              </v-btn>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -196,51 +286,6 @@
       </div>
     </div>
 
-    <!-- Export Dialog -->
-    <v-dialog v-model="showExportDialog" max-width="560" persistent>
-      <v-card class="dialog-card">
-        <v-card-title class="dialog-header">
-          <div class="dialog-icon">
-            <v-icon color="primary">mdi-file-chart</v-icon>
-          </div>
-          <div class="dialog-text">
-            <h2 class="dialog-title">Generar Informes</h2>
-            <p class="dialog-subtitle">Elige el tipo de reporte</p>
-          </div>
-        </v-card-title>
-
-        <v-card-text class="dialog-content">
-          <div class="mb-4 format-selector">
-            <span class="mr-3" style="font-weight:600; color:#334155;">Formato:</span>
-            <v-btn-toggle v-model="exportFormat" density="comfortable" rounded mandatory>
-              <v-btn value="excel" size="small"><v-icon start size="14">mdi-file-excel</v-icon>Excel</v-btn>
-              <v-btn value="pdf" size="small"><v-icon start size="14">mdi-file-pdf-box</v-icon>PDF</v-btn>
-            </v-btn-toggle>
-          </div>
-          <div class="report-options">
-            <v-btn block color="primary" variant="elevated" class="mb-3" @click="generateInventoryReport">
-              <v-icon start>mdi-clipboard-list</v-icon>
-              Reporte de Inventario
-            </v-btn>
-            <v-btn block color="primary" variant="tonal" class="mb-3" @click="generateLoansReport">
-              <v-icon start>mdi-book-clock</v-icon>
-              Reporte de Préstamos
-            </v-btn>
-            <v-btn block color="primary" variant="tonal" @click="generateReturnsReport">
-              <v-icon start>mdi-keyboard-return</v-icon>
-              Reporte de Devoluciones
-            </v-btn>
-          </div>
-        </v-card-text>
-
-        <v-card-actions class="dialog-actions">
-          <v-spacer />
-          <v-btn variant="text" color="grey-darken-1" @click="showExportDialog = false">
-            Cerrar
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
@@ -253,13 +298,12 @@ import logoUrl from '@/assets/logo.png'
 
 Chart.register(...registerables)
 
-const showExportDialog = ref(false)
 const chartPeriod = ref(0) // 0: 6M, 1: 1A, 2: Todo
-// Export dialog state
-const exportType = ref('')
+// Export format state for each report type
 const exportFormat = ref<'excel' | 'pdf'>('excel')
-const dateFrom = ref('')
-const dateTo = ref('')
+const inventoryFormat = ref<'excel' | 'pdf'>('pdf')
+const loansFormat = ref<'excel' | 'pdf'>('pdf')
+const returnsFormat = ref<'excel' | 'pdf'>('pdf')
 
 const loansChart = ref<HTMLCanvasElement>()
 const categoriesChart = ref<HTMLCanvasElement>()
@@ -301,9 +345,6 @@ const metrics = ref<Array<{ label: string; value: string; icon: string; color: s
 
 const recentLoans = ref<Array<{ book: string; user: string; date: string; status: 'active' | 'returned' }>>([])
 const topBooks = ref<Array<{ title: string; author: string; loans: number }>>([])
-
-const exportTypes: string[] = []
-const exportFormats: string[] = []
 
 function formatRelativeTime(dateString?: string): string {
   if (!dateString) return 'Fecha desconocida'
@@ -631,26 +672,116 @@ function buildReportHtml(title: string, subtitle: string, columns: string[], row
   const now = new Date()
   const fechaStr = now.toLocaleString()
   const nombreBib = authStore.biblioteca?.nombre || 'Biblioteca'
+  const logoData = (window as any).__reportLogo || ''
+
   const header = `<div class="header">
-    <img src="${(window as any).__reportLogo || ''}" alt="BiblioKardex" width="48" height="48" />
-    <div>
+    <img src="${logoData}" alt="BiblioKardex" width="56" height="56" />
+    <div class="header-text">
       <div class="title">${escapeHtml(title)}</div>
-      <div class="meta">${escapeHtml(subtitle)} — Biblioteca: ${escapeHtml(nombreBib)} — Fecha de emisión: ${escapeHtml(fechaStr)}</div>
+      <div class="meta">${subtitle ? escapeHtml(subtitle) + ' — ' : ''}Biblioteca: ${escapeHtml(nombreBib)}</div>
+      <div class="meta-date">Fecha de emisión: ${escapeHtml(fechaStr)}</div>
     </div>
   </div>`
+
   const thead = `<thead><tr>${columns.map(c => `<th>${escapeHtml(c)}</th>`).join('')}</tr></thead>`
   const tbody = `<tbody>${rows.map(r => `<tr>${r.map(cell => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`).join('')}</tbody>`
+
   return `<!DOCTYPE html>
   <html><head><meta charset="UTF-8"/>
   <style>
-    body { font-family: Arial, Helvetica, sans-serif; }
-    .header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
-    .title { font-size: 18px; font-weight: bold; }
-    .meta { margin-top: 4px; color: #444; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #999; padding: 8px; vertical-align: top; }
-    th { background: #e8eefc; }
-    td.num { text-align: center; }
+    @page {
+      size: A4 landscape;
+      margin: 20mm 15mm 25mm 15mm;
+    }
+    body {
+      font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #1E293B;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 3px solid #1E3A8A;
+    }
+    .header img {
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .header-text {
+      flex: 1;
+    }
+    .title {
+      font-size: 22px;
+      font-weight: bold;
+      color: #1E3A8A;
+      margin-bottom: 6px;
+    }
+    .meta {
+      font-size: 11px;
+      color: #64748B;
+      margin-bottom: 2px;
+    }
+    .meta-date {
+      font-size: 10px;
+      color: #94A3B8;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    th, td {
+      border: 1px solid #CBD5E1;
+      padding: 10px 8px;
+      vertical-align: top;
+      font-size: 10px;
+    }
+    th {
+      background: linear-gradient(180deg, #E8EEFC 0%, #D6DFFA 100%);
+      font-weight: 600;
+      color: #1E3A8A;
+      text-align: left;
+    }
+    tbody tr:nth-child(even) {
+      background-color: #F8FAFC;
+    }
+    tbody tr:hover {
+      background-color: #F1F5F9;
+    }
+    td.num {
+      text-align: center;
+    }
+    .footerbar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 36px;
+      background: linear-gradient(135deg, #1E3A8A 0%, #7C3AED 100%);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 11px;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .footer-left img {
+      border-radius: 4px;
+    }
+    .footer-right {
+      font-size: 10px;
+      opacity: 0.95;
+    }
   </style>
   </head><body>
   ${header}
@@ -658,6 +789,13 @@ function buildReportHtml(title: string, subtitle: string, columns: string[], row
     ${thead}
     ${tbody}
   </table>
+  <div class="footerbar">
+    <div class="footer-left">
+      <img src="${logoData}" width="20" height="20"/>
+      <span><strong>BiblioKardex</strong> • ${escapeHtml(nombreBib)}</span>
+    </div>
+    <div class="footer-right">${escapeHtml(fechaStr)}</div>
+  </div>
   </body></html>`
 }
 
@@ -692,6 +830,140 @@ async function ensureReportLogo() {
   return data
 }
 
+function hasPdfMake(): boolean {
+  return typeof (window as any).pdfMake !== 'undefined' && !!(window as any).pdfMake
+}
+
+async function openPdfReport(
+  title: string,
+  subtitle: string,
+  columns: string[],
+  rows: string[][],
+  fileName?: string
+) {
+  try {
+    await ensureReportLogo()
+    const pdfMake = (window as any).pdfMake
+    if (!hasPdfMake() || !pdfMake?.createPdf) {
+      const html = buildReportHtml(title, subtitle, columns, rows)
+      printPdfFromHtml(html)
+      return
+    }
+
+    const now = new Date()
+    const fechaStr = now.toLocaleString()
+    const nombreBib = authStore.biblioteca?.nombre || 'Biblioteca'
+    const logoDataUrl = (window as any).__reportLogo as string
+
+    const tableBody = [columns, ...rows]
+    const widths = columns.map(() => '*')
+
+    const primaryColor = '#1E3A8A'
+    const secondaryColor = '#7C3AED'
+    const headerColor = '#e8eefc'
+    const textMuted = '#64748B'
+
+    const docDefinition: any = {
+      pageOrientation: 'landscape',
+      pageMargins: [40, 90, 40, 70],
+      info: {
+        title: title,
+        author: 'BiblioKardex',
+        subject: subtitle || 'Reporte',
+        keywords: 'Reporte, Biblioteca, BiblioKardex'
+      },
+      header: function () {
+        return {
+          margin: [40, 24, 40, 12],
+          columns: [
+            { image: logoDataUrl, width: 48, height: 48, margin: [0, 4, 0, 0] },
+            {
+              width: '*',
+              stack: [
+                { text: title, fontSize: 18, bold: true, color: primaryColor, margin: [0, 4, 0, 0] },
+                { text: `${subtitle ? subtitle + ' — ' : ''}Biblioteca: ${nombreBib}`, fontSize: 10, color: textMuted, margin: [0, 4, 0, 0] },
+                { text: `Fecha de emisión: ${fechaStr}`, fontSize: 9, color: textMuted, margin: [0, 2, 0, 0] }
+              ]
+            }
+          ]
+        }
+      },
+      footer: function (currentPage: number, pageCount: number) {
+        return {
+          margin: [0, 12, 0, 0],
+          table: {
+            widths: ['*'],
+            body: [[
+              {
+                margin: [40, 0, 40, 0],
+                columns: [
+                  {
+                    width: 'auto',
+                    stack: [
+                      { image: logoDataUrl, width: 18, height: 18, margin: [0, 0, 8, 0] }
+                    ]
+                  },
+                  {
+                    width: '*',
+                    text: `BiblioKardex • ${nombreBib}`,
+                    color: '#FFFFFF',
+                    fontSize: 10,
+                    alignment: 'left',
+                    margin: [0, 2, 0, 0]
+                  },
+                  {
+                    width: 'auto',
+                    text: `Página ${currentPage} de ${pageCount}`,
+                    color: '#FFFFFF',
+                    fontSize: 10,
+                    alignment: 'right',
+                    margin: [0, 2, 0, 0]
+                  }
+                ]
+              }
+            ]]
+          },
+          layout: {
+            fillColor: function () { return primaryColor },
+            hLineWidth: function () { return 0 },
+            vLineWidth: function () { return 0 },
+            paddingLeft: function () { return 16 },
+            paddingRight: function () { return 16 },
+            paddingTop: function () { return 10 },
+            paddingBottom: function () { return 10 }
+          }
+        }
+      },
+      content: [
+        {
+          table: {
+            headerRows: 1,
+            widths,
+            body: tableBody
+          },
+          layout: {
+            fillColor: function (rowIndex: number) { return rowIndex === 0 ? headerColor : null },
+            hLineColor: function () { return '#CBD5E1' },
+            vLineColor: function () { return '#CBD5E1' },
+            paddingLeft: function () { return 8 },
+            paddingRight: function () { return 8 },
+            paddingTop: function () { return 6 },
+            paddingBottom: function () { return 6 }
+          }
+        }
+      ],
+      defaultStyle: { fontSize: 9 }
+    }
+
+    const pdf = pdfMake.createPdf(docDefinition)
+    // Open in a new tab with the browser PDF viewer
+    pdf.open()
+  } catch (e) {
+    const html = buildReportHtml(title, subtitle, columns, rows)
+    printPdfFromHtml(html)
+  }
+}
+
 async function generateInventoryReport() {
   try {
     if (!authStore.user?.bibliotecaId) throw new Error('Biblioteca no definida')
@@ -720,82 +992,24 @@ async function generateInventoryReport() {
     }
 
     const rows = Array.from(groups.values())
-
-    const now = new Date()
-    const fechaStr = now.toLocaleString()
-    const nombreBib = authStore.biblioteca?.nombre || 'Biblioteca'
-    const logoDataUrl = await toDataUrl(logoUrl as unknown as string)
-
-    const tableRows = rows.map(r => `
-      <tr>
-        <td>${escapeHtml(r.titulo)}</td>
-        <td>${escapeHtml(r.autor)}</td>
-        <td>${escapeHtml(r.descripcion)}</td>
-        <td>${escapeHtml(r.categoria || 'Sin categoría')}</td>
-        <td style="text-align:center;">${r.total}</td>
-        <td style="text-align:center;">${r.disponibles}</td>
-      </tr>
-    `).join('')
-
-    const html = `<!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8" />
-        <style>
-          body { font-family: Arial, Helvetica, sans-serif; }
-          .header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
-          .title { font-size: 18px; font-weight: bold; }
-          .meta { margin-top: 4px; color: #444; }
-          table { border-collapse: collapse; width: 100%; }
-          th, td { border: 1px solid #999; padding: 8px; vertical-align: top; }
-          th { background: #e8eefc; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <img src="${logoDataUrl}" alt="BiblioKardex" width="48" height="48" />
-          <div>
-            <div class="title">REPORTE DE INVENTARIO</div>
-            <div class="meta">Biblioteca: ${escapeHtml(nombreBib)} — Fecha de emisión: ${escapeHtml(fechaStr)}</div>
-          </div>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Título</th>
-              <th>Autor</th>
-              <th>Descripción</th>
-              <th>Categoría</th>
-              <th>Ejemplares</th>
-              <th>Cantidad</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${tableRows}
-          </tbody>
-        </table>
-      </body>
-      </html>`
+    const columns = ['Título','Autor','Descripción','Categoría','Ejemplares','Disponibles']
+    const pdfRows = rows.map(r => [
+      r.titulo || '—',
+      r.autor || '—',
+      r.descripcion || '—',
+      r.categoria || 'Sin categoría',
+      String(r.total || 0),
+      String(r.disponibles || 0)
+    ])
 
     if (exportFormat.value === 'excel') {
-      const blob = new Blob([html], { type: 'application/vnd.ms-excel' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      const pad = (n: number) => String(n).padStart(2, '0')
-      const ts = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`
-      a.href = url
-      a.download = `Inventario_${nombreBib.replace(/\s+/g, '_')}_${ts}.xls`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      const html = buildReportHtml('Reporte de Inventario', '', columns, pdfRows)
+      downloadExcelFromHtml(html, `Inventario_${(authStore.biblioteca?.nombre || 'Biblioteca').replace(/\s+/g,'_')}`)
     } else {
-      printPdfFromHtml(html)
+      await openPdfReport('Reporte de Inventario', '', columns, pdfRows)
     }
   } catch (e) {
     console.error('No se pudo generar el reporte de Inventario:', e)
-  } finally {
-    showExportDialog.value = false
   }
 }
 
@@ -824,16 +1038,14 @@ async function generateLoansReport() {
       ] as string[]
     })
     const columns = ['Fecha préstamo','Título','Autor','Lector','Estado']
-    const html = buildReportHtml('REPORTE DE PRÉSTAMOS', '', columns, rows)
+    const html = buildReportHtml('Reporte de Préstamos', '', columns, rows)
     if (exportFormat.value === 'excel') {
       downloadExcelFromHtml(html, `Prestamos_${(authStore.biblioteca?.nombre || 'Biblioteca').replace(/\s+/g,'_')}`)
     } else {
-      printPdfFromHtml(html)
+      await openPdfReport('Reporte de Préstamos', '', columns, rows)
     }
   } catch (e) {
     console.error('No se pudo generar el reporte de Préstamos:', e)
-  } finally {
-    showExportDialog.value = false
   }
 }
 
@@ -859,16 +1071,14 @@ async function generateReturnsReport() {
       ] as string[]
     })
     const columns = ['Fecha préstamo','Fecha devolución','Título','Autor','Lector']
-    const html = buildReportHtml('REPORTE DE DEVOLUCIONES', '', columns, rows)
+    const html = buildReportHtml('Reporte de Devoluciones', '', columns, rows)
     if (exportFormat.value === 'excel') {
       downloadExcelFromHtml(html, `Devoluciones_${(authStore.biblioteca?.nombre || 'Biblioteca').replace(/\s+/g,'_')}`)
     } else {
-      printPdfFromHtml(html)
+      await openPdfReport('Reporte de Devoluciones', '', columns, rows)
     }
   } catch (e) {
     console.error('No se pudo generar el reporte de Devoluciones:', e)
-  } finally {
-    showExportDialog.value = false
   }
 }
 
@@ -919,7 +1129,7 @@ watch(() => authStore.user?.bibliotecaId, (newId) => {
 
 /* Header */
 .header-section {
-  background: linear-gradient(135deg, #1E3A8A 0%, #7C3AED 100%);
+  background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
   padding: 32px 0;
 }
 
@@ -1258,61 +1468,158 @@ watch(() => authStore.user?.bibliotecaId, (newId) => {
   color: #64748B;
 }
 
-/* Dialog */
-.dialog-card {
-  border-radius: 20px;
-  overflow: hidden;
-}
-
-.dialog-header {
-  padding: 24px;
-  background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
+/* Reports Info Banner */
+.reports-info-banner {
   display: flex;
   align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #EFF6FF 0%, #F5F3FF 100%);
+  border: 1px solid #BFDBFE;
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 4px rgba(30, 58, 138, 0.08);
+}
+
+.reports-info-banner span {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1E40AF;
+  line-height: 1.5;
+}
+
+/* Reports Grid */
+.reports-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.report-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid #E2E8F0;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
-.dialog-icon {
-  width: 48px;
-  height: 48px;
-  background: #ffffff;
-  border-radius: 12px;
+.report-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.dialog-title {
+.report-icon-wrapper.inventory {
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+}
+
+.report-icon-wrapper.loans {
+  background: linear-gradient(135deg, #F59E0B 0%, #EF4444 100%);
+}
+
+.report-icon-wrapper.returns {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+}
+
+.report-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.report-title {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: #1E293B;
 }
 
-.dialog-subtitle {
-  margin: 4px 0 0 0;
+.report-description {
+  margin: 0;
   font-size: 14px;
   color: #64748B;
+  line-height: 1.5;
 }
 
-.dialog-content {
-  padding: 24px;
-}
-
-.form-row {
-  margin-bottom: 16px;
-}
-
-.form-row-group {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.dialog-actions {
-  padding: 16px 24px 24px 24px;
+.report-actions {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
+  margin-top: auto;
+}
+
+.format-toggle {
+  width: 100%;
+  background: #F8FAFC;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.format-toggle :deep(.v-btn) {
+  flex: 1;
+  border-radius: 8px !important;
+  margin: 4px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  transition: all 0.2s ease;
+  color: #64748B;
+  background: transparent;
+}
+
+.format-toggle :deep(.v-btn:hover) {
+  background: #E2E8F0;
+  color: #1E293B;
+}
+
+.format-toggle :deep(.v-btn--active) {
+  background: linear-gradient(135deg, #1E3A8A 0%, #7C3AED 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(30, 58, 138, 0.3);
+  font-weight: 600;
+}
+
+.format-toggle :deep(.v-btn--active .v-icon) {
+  color: #FFFFFF !important;
+}
+
+/* Download Button */
+.report-actions :deep(.v-btn.v-btn--elevated) {
+  background: linear-gradient(135deg, #1E3A8A 0%, #7C3AED 100%) !important;
+  box-shadow: 0 4px 14px rgba(30, 58, 138, 0.4) !important;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0.3px;
+  transition: all 0.3s ease;
+}
+
+.report-actions :deep(.v-btn.v-btn--elevated:hover) {
+  box-shadow: 0 6px 20px rgba(30, 58, 138, 0.5) !important;
+  transform: translateY(-2px);
+}
+
+.report-actions :deep(.v-btn.v-btn--elevated:active) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(30, 58, 138, 0.3) !important;
+}
+
+.report-actions :deep(.v-btn .v-icon) {
+  transition: transform 0.3s ease;
+}
+
+.report-actions :deep(.v-btn:hover .v-icon) {
+  transform: translateY(-1px);
 }
 
 /* Responsive */

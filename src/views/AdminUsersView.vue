@@ -107,7 +107,15 @@ const form = ref<{ planKey: string; status: string; trialStart: string | null; t
 
 const planOptions = [
   { title: 'FREE', value: 'FREE' },
-  { title: 'PRO', value: 'PRO' }
+  { title: 'Básico - Mensual', value: 'bibliokardex_basico:basico-monthly' },
+  { title: 'Básico - Semestral', value: 'bibliokardex_basico:basico-semiannual' },
+  { title: 'Básico - Anual', value: 'bibliokardex_basico:basico-annual' },
+  { title: 'Intermedio - Mensual', value: 'bibliokardex_intermedio:intermedio-monthly' },
+  { title: 'Intermedio - Semestral', value: 'bibliokardex_intermedio:intermedio-semiannual' },
+  { title: 'Intermedio - Anual', value: 'bibliokardex_intermedio:intermedio-annual' },
+  { title: 'Avanzado - Mensual', value: 'bibliokardex_avanzado:avanzado-monthly' },
+  { title: 'Avanzado - Semestral', value: 'bibliokardex_avanzado:avanzado-semiannual' },
+  { title: 'Avanzado - Anual', value: 'bibliokardex_avanzado:avanzado-annual' }
 ]
 
 const statusOptions = [

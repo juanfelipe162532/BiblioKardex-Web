@@ -62,6 +62,18 @@ const router = createRouter({
       ]
     },
     {
+      path: '/admin/app-control',
+      component: DashboardLayout,
+      meta: { requiresAuth: true, adminOnly: true },
+      children: [
+        {
+          path: '',
+          name: 'admin-app-control',
+          component: () => import('../views/AdminAppControlView.vue'),
+        }
+      ]
+    },
+    {
       path: '/users',
       component: DashboardLayout,
       meta: { requiresAuth: true },

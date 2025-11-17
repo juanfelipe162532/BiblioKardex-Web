@@ -190,7 +190,8 @@ const menuItems = computed(() => {
     return [
       { title: 'Inicio', icon: 'mdi-home', to: '/dashboard' },
       { title: 'Usuarios (Admin)', icon: 'mdi-shield-account', to: '/admin/users' },
-      { title: 'Soporte', icon: 'mdi-lifebuoy', to: '/admin/support' }
+      { title: 'Soporte', icon: 'mdi-lifebuoy', to: '/admin/support' },
+      { title: 'App Control', icon: 'mdi-cellphone-cog', to: '/admin/app-control' }
     ]
   }
   return [
@@ -205,8 +206,9 @@ const bottomNavItems = computed(() => {
   if (isAdmin.value) {
     return [
       { title: 'Inicio', icon: 'mdi-home', to: '/dashboard', value: 'dashboard' },
-      { title: 'Usuarios (Admin)', icon: 'mdi-shield-account', to: '/admin/users', value: 'admin-users' },
-      { title: 'Soporte', icon: 'mdi-lifebuoy', to: '/admin/support', value: 'admin-support' }
+      { title: 'Usuarios', icon: 'mdi-shield-account', to: '/admin/users', value: 'admin-users' },
+      { title: 'Soporte', icon: 'mdi-lifebuoy', to: '/admin/support', value: 'admin-support' },
+      { title: 'App Control', icon: 'mdi-cellphone-cog', to: '/admin/app-control', value: 'admin-app-control' }
     ]
   }
   return [
